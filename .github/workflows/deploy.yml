@@ -34,9 +34,11 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftps
           local-dir: ./public/
-          # Figyelem: ha a README 4.1 szerint kulon, public_html-re korlatozott
-          # FTP-fiokot hasznalsz, ide "/" kell. A tablazat a README 4.3 pontjaban van.
-          server-dir: /public_html/
+          # Hova masolja a fajlokat a tarhelyen. A "/" azt jelenti: oda, ahova
+          # az FTP-fiok belep. Ez a helyes ertek, ha a README 4.1 szerint kulon,
+          # a public_html mappara korlatozott FTP-fiokot hasznalsz.
+          # Ha megis a fo FTP-fiokkal csatlakozol, lasd a README 4.3 pontjat.
+          server-dir: /
           # A config.php a szerveren el (adatbazis jelszo, admin hash),
           # ezert sem feltolteni, sem torolni nem szabad.
           exclude: |

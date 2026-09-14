@@ -130,17 +130,25 @@ A repo → **Settings** → **Secrets and variables** → **Actions** →
 
 #### 4.3. Ellenőrizd a célmappát
 
-A `.github/workflows/deploy.yml` fájlban a `server-dir` értéke attól függ,
-melyik FTP-fiókot használod:
+Ez **egyetlen sor** a `.github/workflows/deploy.yml` fájlban:
 
-| Használt fiók | `server-dir` értéke |
+```yaml
+server-dir: /
+```
+
+Ez mondja meg, hogy a tárhelyen hova másolja a fájlokat. Az alapértelmezett `/`
+azt jelenti: *oda, ahova az FTP-fiók belép*. Ha a 4.1 szerinti külön fiókot
+használod, ez már helyes, nincs teendőd.
+
+Csak akkor kell hozzányúlni, ha mégis a **fő** FTP-fiókkal csatlakozol – az
+ugyanis a tárhely gyökerébe lép be, nem az oldal mappájába, így oda kell
+navigálni. Válaszd ki azt az **egy** sort, ami rád igaz:
+
+| Ha ezzel csatlakozol… | …akkor `server-dir:` |
 |---|---|
 | Külön, a `public_html`-re korlátozott fiók (ajánlott) | `/` |
 | Fő FTP-fiók, fő domain | `/public_html/` |
 | Fő FTP-fiók, további domain | `/domains/a-domained.hu/public_html/` |
-
-Az alapértelmezett érték a fájlban `/public_html/` – ha a 4.1 szerinti külön
-fiókot használod, írd át `/`-re.
 
 Kész. Minden `main` ágra pusholás után automatikusan felmegy a `public/` tartalma.
 A folyamatot a repo **Actions** fülén tudod követni.
