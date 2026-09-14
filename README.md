@@ -68,19 +68,49 @@ kézzel: hPanel → **Fájlkezelő** → töltsd fel a `public/` mappa **tartalm
 
 Ezután elég a GitHubra pusholni, és a tárhely magától frissül.
 
-1. hPanel → **Fájlok** → **FTP-fiókok**: itt látod az FTP szerver címét,
-   a felhasználónevet, és tudsz jelszót beállítani.
-2. GitHubon: a repo → **Settings** → **Secrets and variables** → **Actions** →
-   **New repository secret**. Vedd fel ezt a hármat:
+#### 4.1. Hozz létre egy külön FTP-fiókot ehhez az oldalhoz
 
-   | Név | Érték |
-   |---|---|
-   | `FTP_SERVER` | pl. `ftp.a-domained.hu` |
-   | `FTP_USERNAME` | az FTP felhasználónév |
-   | `FTP_PASSWORD` | az FTP jelszó |
+**Ne a fő FTP-fiókot add oda a GitHubnak.** A Hostinger fő FTP-fiókja a *teljes
+tárhelycsomaghoz* tartozik, nem egy weboldalhoz – vagyis a csomagod **összes**
+oldalának fájljait eléri. Ha ez a jelszó kerül be a GitHub secretbe, akkor egy
+esetleges szivárgás nem csak a menzás oldalt érinti.
 
-3. Kész. Minden `main` ágra pusholás után automatikusan felmegy a `public/` tartalma.
-   A folyamatot a repo **Actions** fülén tudod követni.
+Ehelyett:
+
+1. hPanel → **Fájlok** → **FTP-fiókok** → **További FTP-fiók létrehozása**.
+2. A **könyvtár** mezőbe írd be *kizárólag* ennek az oldalnak az útvonalát, pl.:
+   `/home/u123456789/domains/a-domained.hu/public_html`
+3. Adj neki saját, hosszú, véletlen jelszót (nem ugyanazt, amit máshol használsz).
+
+Így ez a fiók csak ehhez az egy oldalhoz fér hozzá.
+
+#### 4.2. GitHub secretek
+
+A repo → **Settings** → **Secrets and variables** → **Actions** →
+**New repository secret**. Vedd fel ezt a hármat:
+
+| Név | Érték |
+|---|---|
+| `FTP_SERVER` | az FTP szerver címe (hPanel → FTP-fiókok) |
+| `FTP_USERNAME` | a 4.1-ben létrehozott fiók felhasználóneve |
+| `FTP_PASSWORD` | a 4.1-ben megadott jelszó |
+
+#### 4.3. Ellenőrizd a célmappát
+
+A `.github/workflows/deploy.yml` fájlban a `server-dir` értéke attól függ,
+melyik FTP-fiókot használod:
+
+| Használt fiók | `server-dir` értéke |
+|---|---|
+| Külön, a `public_html`-re korlátozott fiók (ajánlott) | `/` |
+| Fő FTP-fiók, fő domain | `/public_html/` |
+| Fő FTP-fiók, további domain | `/domains/a-domained.hu/public_html/` |
+
+Az alapértelmezett érték a fájlban `/public_html/` – ha a 4.1 szerinti külön
+fiókot használod, írd át `/`-re.
+
+Kész. Minden `main` ágra pusholás után automatikusan felmegy a `public/` tartalma.
+A folyamatot a repo **Actions** fülén tudod követni.
 
 > A `config.php` szándékosan **nincs** a gitben és a feltöltésből is ki van zárva –
 > így az adatbázis-jelszó soha nem kerül nyilvánosságra, és a feltöltés sem írja felül.

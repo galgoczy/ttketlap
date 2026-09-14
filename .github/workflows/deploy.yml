@@ -34,6 +34,8 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftps
           local-dir: ./public/
+          # Figyelem: ha a README 4.1 szerint kulon, public_html-re korlatozott
+          # FTP-fiokot hasznalsz, ide "/" kell. A tablazat a README 4.3 pontjaban van.
           server-dir: /public_html/
           # A config.php a szerveren el (adatbazis jelszo, admin hash),
           # ezert sem feltolteni, sem torolni nem szabad.
