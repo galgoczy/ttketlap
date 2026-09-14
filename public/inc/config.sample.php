@@ -29,5 +29,24 @@ return [
     'consent_version' => '2026-09-14',
 
     // Az unsubscribe token es az IP-hash sozasahoz. Egyszer allitsd be, utana NE valtoztasd.
+    // Generalas:  openssl rand -base64 48
     'app_secret' => 'IDE_JON_EGY_HOSSZU_VELETLEN_KARAKTERLANC',
+
+    // --- Levelkuldes (SMTP) ---
+    // Reszletes beallitasi utmutato: docs/levelkuldes.md
+    // Ha uresen hagyod az smtp_host-ot, a rendszer nem kuld levelet,
+    // de a feliratkozas tovabbra is mukodik.
+    'smtp_host'   => 'smtp.office365.com',
+    'smtp_port'   => '587',
+    'smtp_secure' => 'tls',
+    'smtp_user'   => 'menza@pelda.hu',
+    'smtp_pass'   => 'IDE_JON_AZ_SMTP_JELSZO',
+
+    // A felado cim. M365 eseten ennek egyeznie KELL az smtp_user postafiokkal
+    // (vagy annak egy engedelyezett alias-aval), kulonben az Exchange elutasitja.
+    'mail_from'      => 'menza@pelda.hu',
+    'mail_from_name' => 'Menza heti etlap',
+
+    // Kuldjon-e visszaigazolo levelet feliratkozaskor? '1' = igen, '0' = nem.
+    'send_welcome_email' => '1',
 ];

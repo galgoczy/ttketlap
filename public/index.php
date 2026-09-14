@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/inc/bootstrap.php';
 require __DIR__ . '/inc/layout.php';
+require __DIR__ . '/inc/mailer.php';
 
 start_session();
 
@@ -31,8 +32,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors[] = 'Túl sok próbálkozás történt. Kérjük, próbáld újra később.';
             } else {
                 log_signup_attempt();
-                subscribe($email);
+                $token = subscribe($email);
                 $succeeded = true;
+
+                // Visszaigazolo level. Ha nem megy ki (pl. az SMTP nem elerheto),
+                // a feliratkozas akkor is ervenyes marad - a felhasznalo nem hibazott.
+                send_welcome_email($email, $token);
                 // Uj CSRF token, hogy a frissites ne kuldje be ujra az urlapot.
                 unset($_SESSION['csrf_token']);
             }
@@ -46,14 +51,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 /**
  * Feliratkoztatja az email-cimet. Ha mar letezik, ujra aktivalja,
  * es frissiti a hozzajarulas idopontjat/verziojat.
+ *
+ * @return string a cimhez tartozo leiratkozo token
  */
-function subscribe(string $email): void
+function subscribe(string $email): string
 {
-    $stmt = db()->prepare('SELECT id, status FROM subscribers WHERE email = ?');
+    $stmt = db()->prepare('SELECT id, status, unsubscribe_token FROM subscribers WHERE email = ?');
     $stmt->execute([$email]);
     $existing = $stmt->fetch();
 
     if ($existing === false) {
+        $token = bin2hex(random_bytes(32));
+
         db()->prepare(
             'INSERT INTO subscribers
                 (email, status, consent_version, consent_at, unsubscribe_token, source, ip_hash)
@@ -61,11 +70,12 @@ function subscribe(string $email): void
         )->execute([
             $email,
             cfg('consent_version'),
-            bin2hex(random_bytes(32)),
+            $token,
             substr((string) ($_GET['forras'] ?? 'qr'), 0, 64),
             ip_hash(),
         ]);
-        return;
+
+        return $token;
     }
 
     db()->prepare(
@@ -76,6 +86,8 @@ function subscribe(string $email): void
                 unsubscribed_at = NULL
           WHERE id = ?'
     )->execute([cfg('consent_version'), $existing['id']]);
+
+    return $existing['unsubscribe_token'];
 }
 
 render_header('Feliratkozás a heti étlapra');

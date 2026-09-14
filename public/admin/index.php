@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/auth.php';
+require __DIR__ . '/../inc/mailer.php';
 
 $error = '';
 
@@ -70,6 +71,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_id'])) {
     exit;
 }
 
+// Teszt level kuldese, hogy az SMTP beallitast ellenorizni lehessen.
+$mailNotice = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_test'])) {
+    if (!csrf_valid($_POST['csrf_token'] ?? null)) {
+        $mailNotice = 'error:Az űrlap érvényessége lejárt, próbáld újra.';
+    } elseif (cfg('smtp_host') === '') {
+        $mailNotice = 'error:Nincs beállítva SMTP szerver a config.php-ban.';
+    } else {
+        $testTo = cfg('contact_email');
+        try {
+            send_email(
+                $testTo,
+                'Teszt levél – ' . cfg('site_name'),
+                '<p>Ez egy teszt levél. Ha megkaptad, az SMTP beállítás működik.</p>',
+                'Ez egy teszt level. Ha megkaptad, az SMTP beallitas mukodik.'
+            );
+            $mailNotice = 'success:Teszt levél elküldve ide: ' . $testTo;
+        } catch (Throwable $exception) {
+            error_log('Teszt level hiba: ' . $exception->getMessage());
+            $mailNotice = 'error:A küldés nem sikerült: ' . $exception->getMessage();
+        }
+    }
+}
+
 $perPage = 50;
 $page    = max(1, (int) ($_GET['oldal'] ?? 1));
 $offset  = ($page - 1) * $perPage;
@@ -102,6 +127,14 @@ render_header('Feliratkozók', true, true);
 <div class="admin">
     <h1 class="title">Feliratkozók</h1>
 
+    <?php if ($mailNotice !== ''): ?>
+        <?php [$noticeType, $noticeText] = explode(':', $mailNotice, 2); ?>
+        <div class="alert alert--<?= $noticeType === 'success' ? 'success' : 'error' ?>" role="alert">
+            <span class="alert__icon" aria-hidden="true"><?= $noticeType === 'success' ? '✓' : '!' ?></span>
+            <span><?= e($noticeText) ?></span>
+        </div>
+    <?php endif; ?>
+
     <div class="stats">
         <div class="stat">
             <div class="stat__value"><?= (int) $stats['active'] ?></div>
@@ -124,6 +157,12 @@ render_header('Feliratkozók', true, true);
     <div class="toolbar">
         <a class="btn btn--primary btn--small" href="/admin/export.php?tipus=aktiv">Aktívak letöltése (CSV)</a>
         <a class="btn btn--secondary btn--small" href="/admin/export.php?tipus=mind">Teljes lista (CSV)</a>
+        <form method="post" action="/admin/" style="display: inline">
+            <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
+            <button class="btn btn--secondary btn--small btn--inline" type="submit" name="send_test" value="1">
+                Teszt levél küldése
+            </button>
+        </form>
         <a class="btn btn--secondary btn--small" href="/admin/logout.php">Kilépés</a>
     </div>
 

@@ -24,7 +24,7 @@ public/            ← ez kerül ki a tárhely public_html mappájába
   leiratkozas.php    leiratkozás
   adatkezeles.php    tájékoztató
   admin/             adminfelület
-  inc/               közös PHP kód + a konfiguráció (kívülről nem elérhető)
+  inc/               közös PHP kód, levélküldés + a konfiguráció (kívülről nem elérhető)
   assets/css/app.css MINDEN vizuális beállítás egy helyen
 sql/schema.sql     adatbázis tábla
 docs/              email sablon + QR-kód útmutató
@@ -57,7 +57,15 @@ kézzel: hPanel → **Fájlkezelő** → töltsd fel a `public/` mappa **tartalm
    - `operator_name`, `operator_address`, `contact_email` – ezek jelennek meg a
      tájékoztatóban
    - `app_secret` – egy hosszú véletlen karakterlánc. **Egyszer állítsd be, utána
-     soha ne változtasd**, mert a leiratkozó linkek erre épülnek.
+     soha ne változtasd**, mert a leiratkozó linkek erre épülnek. Generálás:
+
+     ```bash
+     openssl rand -base64 48
+     ```
+
+   - `smtp_*` és `mail_from` – a levélküldéshez, lásd
+     [`docs/levelkuldes.md`](docs/levelkuldes.md). Ha egyelőre üresen hagyod az
+     `smtp_host`-ot, a feliratkozás működik, csak visszaigazoló levél nem megy ki.
 3. Admin jelszó: generálj hozzá egy hash-t a terminálban (lásd lentebb),
    és másold a `config.php` `admin_password_hash` mezőjébe.
 4. Nyisd meg a `https://a-domained.hu/` oldalt, és iratkozz fel egy teszt címmel.
@@ -156,7 +164,20 @@ A folyamatot a repo **Actions** fülén tudod követni.
 > A `config.php` szándékosan **nincs** a gitben és a feltöltésből is ki van zárva –
 > így az adatbázis-jelszó soha nem kerül nyilvánosságra, és a feltöltés sem írja felül.
 
-### 5. QR-kód
+### 5. Levélküldés
+
+A domain levelezése M365-ben van, ezért a leveleket SMTP-n keresztül,
+az M365-ön át küldjük – különben a leveleink spambe kerülnének.
+A beállítás lépésről lépésre: [`docs/levelkuldes.md`](docs/levelkuldes.md).
+
+Feliratkozáskor a rendszer küld egy rövid visszaigazoló levelet, benne a
+leiratkozó linkkel. Ez **nem** double opt-in: a feliratkozás a levél nélkül is
+érvényes. Ha a küldés hibázik, a feliratkozás akkor is elmentődik.
+
+Az `/admin/` oldalon a **Teszt levél küldése** gombbal tudod ellenőrizni,
+hogy a beállítás jó-e.
+
+### 6. QR-kód
 
 Lásd: [`docs/qr-kod.md`](docs/qr-kod.md).
 
@@ -194,6 +215,8 @@ nem kisebb 16px-nél (különben az iPhone ránagyít a mezőkre). Sötét tém�
   link-előnézete nem iratkoztat le senkit véletlenül.
 - Az IP-cím csak sózott lenyomatként tárolódik, nem nyersen.
 - CSV export kepletinjekció (`=`, `+`, `@`) ellen védve.
+- A kiküldött levelek `List-Unsubscribe` fejlécet kapnak, így a Gmail és az
+  Outlook saját leiratkozó gombot jelenít meg – ez javítja a kézbesíthetőséget.
 - Biztonsági HTTP-fejlécek és HTTPS-kényszerítés a `.htaccess`-ben.
 
 ---
