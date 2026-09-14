@@ -12,7 +12,8 @@ return [
     'db_pass' => 'IDE_JON_AZ_ADATBAZIS_JELSZO',
 
     // --- Admin belepes ---
-    // A jelszo hash-t a /admin/hash.php oldalon tudod legeneralni (utana torold a fajlt).
+    // A hash generalasat lasd a README-ben ("Az admin jelszo hash generalasa").
+    // Roviden:  php -r 'echo password_hash("JELSZO", PASSWORD_BCRYPT, ["cost" => 12]);'
     'admin_user'          => 'admin',
     'admin_password_hash' => '$2y$12$CSERELD_LE_EZT_EGY_VALODI_BCRYPT_HASHRE',
 

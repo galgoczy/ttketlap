@@ -58,11 +58,44 @@ kézzel: hPanel → **Fájlkezelő** → töltsd fel a `public/` mappa **tartalm
      tájékoztatóban
    - `app_secret` – egy hosszú véletlen karakterlánc. **Egyszer állítsd be, utána
      soha ne változtasd**, mert a leiratkozó linkek erre épülnek.
-3. Admin jelszó: nyisd meg a `https://a-domained.hu/admin/hash.php` oldalt,
-   írd be a kívánt jelszót, másold a kapott hash-t a `config.php`
-   `admin_password_hash` mezőjébe.
-4. **Töröld a `hash.php` fájlt** a tárhelyről.
-5. Nyisd meg a `https://a-domained.hu/` oldalt, és iratkozz fel egy teszt címmel.
+3. Admin jelszó: generálj hozzá egy hash-t a terminálban (lásd lentebb),
+   és másold a `config.php` `admin_password_hash` mezőjébe.
+4. Nyisd meg a `https://a-domained.hu/` oldalt, és iratkozz fel egy teszt címmel.
+
+#### Az admin jelszó hash generálása
+
+A jelszót soha nem tároljuk nyersen, csak egy bcrypt hash-t. Ezt a terminálban
+tudod előállítani – **a parancs bekéri a jelszót, és nem írja ki a képernyőre,
+így a shell előzményekbe sem kerül bele**:
+
+```bash
+read -rs -p "Jelszó: " PW && echo &&
+php -r 'echo password_hash($argv[1], PASSWORD_BCRYPT, ["cost" => 12]), PHP_EOL;' "$PW" &&
+unset PW
+```
+
+A kapott `$2y$12$...` kezdetű sor az, amit a `config.php`-ba kell másolni.
+
+**Ha nincs PHP a gépeden** (a macOS-en alapból nincs), két lehetőség:
+
+```bash
+# a) Apache htpasswd – macOS-en és a legtöbb Linuxon alapból elérhető
+read -rs -p "Jelszó: " PW && echo &&
+htpasswd -nbBC 12 "" "$PW" | cut -d: -f2 &&
+unset PW
+```
+
+```bash
+# b) Docker, ha az van kéznél
+read -rs -p "Jelszó: " PW && echo &&
+docker run --rm php:8.3-cli php -r 'echo password_hash($argv[1], PASSWORD_BCRYPT, ["cost" => 12]), PHP_EOL;' "$PW" &&
+unset PW
+```
+
+Mindhárom ugyanolyan formátumú bcrypt hash-t ad, amit a rendszer elfogad.
+
+> A hash-t nyugodtan másolhatod emailben vagy chatben – nem lehet belőle
+> visszafejteni a jelszót. A **jelszót** magát viszont ne küldd sehova.
 
 ### 4. Automatikus feltöltés GitHubról (opcionális, de ajánlott)
 
