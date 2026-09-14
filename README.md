@@ -1,1 +1,142 @@
-# ttketlap
+# Heti menza étlap – feliratkozási rendszer
+
+QR-kód → mobilbarát feliratkozó oldal → saját email-adatbázis → admin + CSV export → leiratkozás.
+
+Nincs WordPress, nincs külső hírlevél-szolgáltató. Sima PHP + MySQL, ami elfut
+bármelyik Hostinger tárhelyen.
+
+---
+
+## Mi van a dobozban?
+
+| Oldal | Mit csinál |
+|---|---|
+| `/` | Feliratkozó oldal (ide mutat a QR-kód) |
+| `/adatkezeles.php` | Adatkezelési tájékoztató |
+| `/leiratkozas.php?token=...` | Leiratkozás (egyedi link minden feliratkozónak) |
+| `/admin/` | Jelszavas admin: lista, darabszámok, CSV export, deaktiválás |
+
+Mappaszerkezet:
+
+```
+public/            ← ez kerül ki a tárhely public_html mappájába
+  index.php          feliratkozó oldal
+  leiratkozas.php    leiratkozás
+  adatkezeles.php    tájékoztató
+  admin/             adminfelület
+  inc/               közös PHP kód + a konfiguráció (kívülről nem elérhető)
+  assets/css/app.css MINDEN vizuális beállítás egy helyen
+sql/schema.sql     adatbázis tábla
+docs/              email sablon + QR-kód útmutató
+.github/workflows/ automatikus feltöltés Hostingerre
+```
+
+---
+
+## Beüzemelés – lépésről lépésre
+
+### 1. Adatbázis létrehozása
+
+1. Lépj be a Hostinger **hPanel**-be → **Adatbázisok** → **MySQL adatbázisok**.
+2. Hozz létre egy új adatbázist (pl. `menza`) és egy felhasználót. **Mentsd el a jelszót.**
+3. Kattints a **phpMyAdmin** gombra az adatbázis mellett.
+4. Válaszd az **SQL** fület, másold be a `sql/schema.sql` fájl teljes tartalmát, és futtasd le.
+
+### 2. Fájlok feltöltése
+
+Az automatikus feltöltés beállítása a 4. lépésben van. Első alkalommal a leggyorsabb
+kézzel: hPanel → **Fájlkezelő** → töltsd fel a `public/` mappa **tartalmát**
+(nem magát a mappát!) a `public_html` mappába.
+
+### 3. Konfiguráció
+
+1. A `public_html/inc/` mappában másold le a `config.sample.php` fájlt `config.php` néven.
+2. Nyisd meg szerkesztésre, és töltsd ki:
+   - `db_host`, `db_name`, `db_user`, `db_pass` – az 1. lépésben kapott adatok
+   - `site_url` – a domained, `https://`-sel, a végén **per jel nélkül**
+   - `operator_name`, `operator_address`, `contact_email` – ezek jelennek meg a
+     tájékoztatóban
+   - `app_secret` – egy hosszú véletlen karakterlánc. **Egyszer állítsd be, utána
+     soha ne változtasd**, mert a leiratkozó linkek erre épülnek.
+3. Admin jelszó: nyisd meg a `https://a-domained.hu/admin/hash.php` oldalt,
+   írd be a kívánt jelszót, másold a kapott hash-t a `config.php`
+   `admin_password_hash` mezőjébe.
+4. **Töröld a `hash.php` fájlt** a tárhelyről.
+5. Nyisd meg a `https://a-domained.hu/` oldalt, és iratkozz fel egy teszt címmel.
+
+### 4. Automatikus feltöltés GitHubról (opcionális, de ajánlott)
+
+Ezután elég a GitHubra pusholni, és a tárhely magától frissül.
+
+1. hPanel → **Fájlok** → **FTP-fiókok**: itt látod az FTP szerver címét,
+   a felhasználónevet, és tudsz jelszót beállítani.
+2. GitHubon: a repo → **Settings** → **Secrets and variables** → **Actions** →
+   **New repository secret**. Vedd fel ezt a hármat:
+
+   | Név | Érték |
+   |---|---|
+   | `FTP_SERVER` | pl. `ftp.a-domained.hu` |
+   | `FTP_USERNAME` | az FTP felhasználónév |
+   | `FTP_PASSWORD` | az FTP jelszó |
+
+3. Kész. Minden `main` ágra pusholás után automatikusan felmegy a `public/` tartalma.
+   A folyamatot a repo **Actions** fülén tudod követni.
+
+> A `config.php` szándékosan **nincs** a gitben és a feltöltésből is ki van zárva –
+> így az adatbázis-jelszó soha nem kerül nyilvánosságra, és a feltöltés sem írja felül.
+
+### 5. QR-kód
+
+Lásd: [`docs/qr-kod.md`](docs/qr-kod.md).
+
+---
+
+## A heti étlap kiküldése (kézzel)
+
+1. Lépj be az `/admin/` oldalra.
+2. **Aktívak letöltése (CSV)** – a fájl tartalmazza minden feliratkozó
+   egyedi leiratkozó linkjét is.
+3. Küldd ki körlevélként. A sablon és a fontos tudnivalók:
+   [`docs/email-sablon.md`](docs/email-sablon.md).
+
+---
+
+## Design testreszabása
+
+Minden szín, betűméret, térköz és lekerekítés a
+[`public/assets/css/app.css`](public/assets/css/app.css) tetején lévő `:root` blokkban van.
+A design system megérkezésekor **csak ezeket az értékeket kell átírni** –
+a HTML és a PHP változatlan marad.
+
+Az oldal mobile first: egy oszlop, 48px-es érintési felületek, a betűméret sehol
+nem kisebb 16px-nél (különben az iPhone ránagyít a mezőkre). Sötét témát is támogat.
+
+---
+
+## Ami be van építve a biztonság érdekében
+
+- Minden adatbázis-lekérdezés előkészített (prepared) utasítás – nincs SQL injection.
+- CSRF-token minden űrlapon.
+- Rejtett „honeypot” mező + IP-alapú sebességkorlát (10 próbálkozás / óra) a botok ellen.
+- Az admin jelszó bcrypt hash-ként tárolva, nem nyersen.
+- A leiratkozás csak megerősítés (POST) után történik – így a levelezőprogramok
+  link-előnézete nem iratkoztat le senkit véletlenül.
+- Az IP-cím csak sózott lenyomatként tárolódik, nem nyersen.
+- CSV export kepletinjekció (`=`, `+`, `@`) ellen védve.
+- Biztonsági HTTP-fejlécek és HTTPS-kényszerítés a `.htaccess`-ben.
+
+---
+
+## Későbbi automatizálás
+
+Az adatbázis már készen áll rá. A következő lépés egy `cron` feladat lenne, ami
+egy feltöltött étlapból összeállítja a levelet, és kiküldi az aktív feliratkozóknak
+(`SELECT email, unsubscribe_token FROM subscribers WHERE status = 'active'`).
+Ez szándékosan nem része az első verziónak.
+
+## Adatvédelmi megjegyzés
+
+Az `adatkezeles.php` egy **általános sablon**, nem jogi tanács. Mielőtt élesben
+kimegy, nézesd át valakivel, aki ért hozzá, és írd bele a valós céges adatokat.
+Ha módosítod a tájékoztatót, emeld meg a `consent_version` értéket a
+`config.php`-ban – így nyomon követhető, ki melyik verzióra adott hozzájárulást.
