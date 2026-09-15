@@ -27,7 +27,8 @@ public/            ← ez kerül ki a tárhely public_html mappájába
   inc/               közös PHP kód, levélküldés + a konfiguráció (kívülről nem elérhető)
   assets/css/app.css MINDEN vizuális beállítás egy helyen
 sql/schema.sql     adatbázis tábla
-docs/              email sablon + QR-kód útmutató
+docs/              email sablon, levélküldés, QR-kód útmutató
+tools/             jelszó-hash generáló (csak helyben, nem kerül fel a tárhelyre)
 .github/workflows/ automatikus feltöltés Hostingerre
 ```
 
@@ -63,18 +64,24 @@ kézzel: hPanel → **Fájlkezelő** → töltsd fel a `public/` mappa **tartalm
      openssl rand -base64 48
      ```
 
-   - `smtp_*` és `mail_from` – a levélküldéshez, lásd
-     [`docs/levelkuldes.md`](docs/levelkuldes.md). Ha egyelőre üresen hagyod az
-     `smtp_host`-ot, a feliratkozás működik, csak visszaigazoló levél nem megy ki.
-3. Admin jelszó: generálj hozzá egy hash-t a terminálban (lásd lentebb),
-   és másold a `config.php` `admin_password_hash` mezőjébe.
+   - `mail_from`, `graph_*` (vagy `smtp_*`) – a levélküldéshez, lásd
+     [`docs/levelkuldes.md`](docs/levelkuldes.md). Ha ezeket egyelőre üresen
+     hagyod, a feliratkozás működik, csak visszaigazoló levél nem megy ki.
+3. Admin jelszó: generálj hozzá egy hash-t (lásd lentebb), és másold a
+   `config.php` `admin_password_hash` mezőjébe.
 4. Nyisd meg a `https://a-domained.hu/` oldalt, és iratkozz fel egy teszt címmel.
 
 #### Az admin jelszó hash generálása
 
-A jelszót soha nem tároljuk nyersen, csak egy bcrypt hash-t. Ezt a terminálban
-tudod előállítani – **a parancs bekéri a jelszót, és nem írja ki a képernyőre,
-így a shell előzményekbe sem kerül bele**:
+A jelszót soha nem tároljuk nyersen, csak egy bcrypt hash-t.
+
+**A legegyszerűbb:** nyisd meg a [`tools/jelszo-hash.html`](tools/jelszo-hash.html)
+fájlt a böngésződben (elég rákattintani), írd be a jelszót, és másold a kapott
+hash-t. A fájl internet nélkül is működik, a jelszó nem hagyja el a gépedet,
+és nem kerül fel a tárhelyre sem.
+
+**Terminálból**, ha úgy kényelmesebb – **a parancs bekéri a jelszót, és nem
+írja ki a képernyőre, így a shell előzményekbe sem kerül bele**:
 
 ```bash
 read -rs -p "Jelszó: " PW && echo &&
@@ -166,8 +173,17 @@ A folyamatot a repo **Actions** fülén tudod követni.
 
 ### 5. Levélküldés
 
-A domain levelezése M365-ben van, ezért a leveleket SMTP-n keresztül,
-az M365-ön át küldjük – különben a leveleink spambe kerülnének.
+A domain levelezése M365-ben van, ezért a leveleket a Microsofton keresztül
+küldjük – különben a leveleink spambe kerülnének.
+
+Két út közül lehet választani, a `config.php` `mail_transport` mezőjével:
+
+- **`graph`** (alapértelmezés, ajánlott) – Microsoft Graph API,
+  alkalmazás-regisztrációval. Nem kell hozzá jelszó, és nem érinti az
+  egyszerű jelszavas SMTP kivezetése.
+- **`smtp`** – klasszikus jelszavas SMTP. Egyszerűbb, de kifutó megoldás,
+  és ha a tenantban be van kapcsolva a Security Defaults, eleve nem működik.
+
 A beállítás lépésről lépésre: [`docs/levelkuldes.md`](docs/levelkuldes.md).
 
 Feliratkozáskor a rendszer küld egy rövid visszaigazoló levelet, benne a

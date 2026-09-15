@@ -76,8 +76,8 @@ $mailNotice = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_test'])) {
     if (!csrf_valid($_POST['csrf_token'] ?? null)) {
         $mailNotice = 'error:Az űrlap érvényessége lejárt, próbáld újra.';
-    } elseif (cfg('smtp_host') === '') {
-        $mailNotice = 'error:Nincs beállítva SMTP szerver a config.php-ban.';
+    } elseif (!mail_configured()) {
+        $mailNotice = 'error:A levélküldés nincs beállítva a config.php-ban. Lásd: docs/levelkuldes.md';
     } else {
         $testTo = cfg('contact_email');
         try {

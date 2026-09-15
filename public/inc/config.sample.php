@@ -32,20 +32,37 @@ return [
     // Generalas:  openssl rand -base64 48
     'app_secret' => 'IDE_JON_EGY_HOSSZU_VELETLEN_KARAKTERLANC',
 
-    // --- Levelkuldes (SMTP) ---
+    // --- Levelkuldes ---
     // Reszletes beallitasi utmutato: docs/levelkuldes.md
-    // Ha uresen hagyod az smtp_host-ot, a rendszer nem kuld levelet,
-    // de a feliratkozas tovabbra is mukodik.
+    //
+    // 'graph' (ajanlott): Microsoft Graph API, app regisztracioval.
+    //          Nem kell hozza jelszo, es nem erinti az egyszeru jelszavas
+    //          SMTP kivezetese. Ehhez a graph_* mezoket toltsd ki.
+    // 'smtp':  klasszikus jelszavas SMTP. Egyszerubb, de kifuto megoldas,
+    //          es sok tenantban eleve tiltva van.
+    'mail_transport' => 'graph',
+
+    // A felado postafiok. Mindket utvonalnal ez a felado cim.
+    'mail_from'      => 'menza@pelda.hu',
+    'mail_from_name' => 'Menza heti etlap',
+
+    // --- 'graph' utvonal: az Entra ID app regisztracio adatai ---
+    // Entra admin center -> App registrations -> az alkalmazasod:
+    //   graph_tenant_id  = Directory (tenant) ID
+    //   graph_client_id  = Application (client) ID
+    //   graph_client_secret = a Certificates & secrets alatt letrehozott ertek
+    // Az alkalmazasnak Mail.Send APPLICATION jogosultsag kell,
+    // rendszergazdai jovahagyassal. Lasd: docs/levelkuldes.md
+    'graph_tenant_id'     => '',
+    'graph_client_id'     => '',
+    'graph_client_secret' => '',
+
+    // --- 'smtp' utvonal (csak ha mail_transport = 'smtp') ---
     'smtp_host'   => 'smtp.office365.com',
     'smtp_port'   => '587',
     'smtp_secure' => 'tls',
     'smtp_user'   => 'menza@pelda.hu',
-    'smtp_pass'   => 'IDE_JON_AZ_SMTP_JELSZO',
-
-    // A felado cim. M365 eseten ennek egyeznie KELL az smtp_user postafiokkal
-    // (vagy annak egy engedelyezett alias-aval), kulonben az Exchange elutasitja.
-    'mail_from'      => 'menza@pelda.hu',
-    'mail_from_name' => 'Menza heti etlap',
+    'smtp_pass'   => '',
 
     // Kuldjon-e visszaigazolo levelet feliratkozaskor? '1' = igen, '0' = nem.
     'send_welcome_email' => '1',
