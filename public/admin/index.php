@@ -59,13 +59,17 @@ if (!admin_logged_in()) {
 // Statuszvaltas (aktivalas / deaktivalas)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_id'])) {
     if (csrf_valid($_POST['csrf_token'] ?? null)) {
-        $id = (int) $_POST['toggle_id'];
-        db()->prepare(
-            'UPDATE subscribers
-                SET status = IF(status = "active", "inactive", "active"),
-                    unsubscribed_at = IF(status = "active", NOW(), NULL)
-              WHERE id = ?'
-        )->execute([$id]);
+        try {
+            $id = (int) $_POST['toggle_id'];
+            db()->prepare(
+                'UPDATE subscribers
+                    SET status = IF(status = "active", "inactive", "active"),
+                        unsubscribed_at = IF(status = "active", NOW(), NULL)
+                  WHERE id = ?'
+            )->execute([$id]);
+        } catch (Throwable $exception) {
+            error_log('Státuszváltás hiba: ' . $exception->getMessage());
+        }
     }
     header('Location: /admin/?' . http_build_query(['oldal' => (int) ($_POST['page'] ?? 1)]));
     exit;
@@ -99,33 +103,59 @@ $perPage = 50;
 $page    = max(1, (int) ($_GET['oldal'] ?? 1));
 $offset  = ($page - 1) * $perPage;
 
-$stats = db()->query(
-    'SELECT
-        COUNT(*)                                       AS total,
-        SUM(status = "active")                         AS active,
-        SUM(status = "inactive")                       AS inactive,
-        SUM(created_at > DATE_SUB(NOW(), INTERVAL 7 DAY)) AS last_week
-     FROM subscribers'
-)->fetch();
+// Az adatbazis-hibat itt elkapjuk, kulonben a PHP leallna es ures oldal
+// jelenne meg. Ilyenkor a diagnosztika oldalra iranyitjuk a figyelmet,
+// ami pontosan megmondja, mi hianyzik.
+$dbHiba = '';
+$stats = ['total' => 0, 'active' => 0, 'inactive' => 0, 'last_week' => 0];
+$subscribers = [];
+$totalPages = 1;
 
-$totalPages = max(1, (int) ceil(((int) $stats['total']) / $perPage));
+try {
+    $stats = db()->query(
+        'SELECT
+            COUNT(*)                                       AS total,
+            SUM(status = "active")                         AS active,
+            SUM(status = "inactive")                       AS inactive,
+            SUM(created_at > DATE_SUB(NOW(), INTERVAL 7 DAY)) AS last_week
+         FROM subscribers'
+    )->fetch();
 
-$stmt = db()->prepare(
-    'SELECT id, email, status, consent_version, consent_at, created_at, unsubscribed_at
-       FROM subscribers
-      ORDER BY created_at DESC
-      LIMIT :limit OFFSET :offset'
-);
-$stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
-$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-$stmt->execute();
-$subscribers = $stmt->fetchAll();
+    $totalPages = max(1, (int) ceil(((int) $stats['total']) / $perPage));
+
+    $stmt = db()->prepare(
+        'SELECT id, email, status, consent_version, consent_at, created_at, unsubscribed_at
+           FROM subscribers
+          ORDER BY created_at DESC
+          LIMIT :limit OFFSET :offset'
+    );
+    $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->execute();
+    $subscribers = $stmt->fetchAll();
+} catch (Throwable $exception) {
+    error_log('Admin lista hiba: ' . $exception->getMessage());
+    $dbHiba = $exception->getMessage();
+}
 
 render_header('Feliratkozók', true, true);
 ?>
 
 <div class="admin">
     <h1 class="title">Feliratkozók</h1>
+
+    <?php if ($dbHiba !== ''): ?>
+        <div class="alert alert--error" role="alert">
+            <span class="alert__icon" aria-hidden="true">!</span>
+            <span>
+                <strong>Az adatbázis nem érhető el.</strong><br>
+                Emiatt a lista és a darabszámok üresek. Nyisd meg a
+                <a href="/admin/diagnosztika.php">diagnosztika oldalt</a> – az pontosan
+                megmondja, mi hiányzik.<br>
+                <span style="font-size: var(--text-xs)"><?= e($dbHiba) ?></span>
+            </span>
+        </div>
+    <?php endif; ?>
 
     <?php if ($mailNotice !== ''): ?>
         <?php [$noticeType, $noticeText] = explode(':', $mailNotice, 2); ?>

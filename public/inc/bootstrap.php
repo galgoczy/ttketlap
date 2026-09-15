@@ -19,6 +19,53 @@ if (!is_file($configFile)) {
 $config = require $configFile;
 
 /**
+ * Vegso biztonsagi halo: ha barhol kezeletlen hiba tortenik, a latogato
+ * ne egy ures feher oldalt lasson. A reszletek a hibanaploba mennek -
+ * a kepernyore SOHA, mert az technikai reszleteket szivarogtatna ki.
+ */
+function hiba_oldal(): void
+{
+    if (!headers_sent()) {
+        http_response_code(500);
+        header('Content-Type: text/html; charset=utf-8');
+    }
+
+    echo '<!DOCTYPE html><html lang="hu"><head><meta charset="utf-8">'
+       . '<meta name="viewport" content="width=device-width, initial-scale=1">'
+       . '<title>Technikai hiba</title>'
+       . '<style>body{margin:0;padding:2rem 1rem;background:#f8f7f5;color:#2e2e2e;'
+       . 'font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;line-height:1.6}'
+       . 'main{max-width:34rem;margin:3rem auto;background:#fff;border:1px solid #e4e4e4;'
+       . 'border-radius:8px;padding:1.5rem}h1{font-size:1.5rem;margin:0 0 .5rem;color:#000}'
+       . 'p{margin:0 0 1rem}a{color:#e52721}</style></head><body><main>'
+       . '<h1>Technikai hiba</h1>'
+       . '<p>Az oldal most nem érhető el. Kérjük, próbálja újra néhány perc múlva.</p>'
+       . '<p style="font-size:.875rem;color:#5e5e5e">Ha Ön az üzemeltető: a hiba oka a szerver '
+       . 'hibanaplójában van, és az <a href="/admin/diagnosztika.php">admin diagnosztika</a> '
+       . 'oldal is megmutatja, mi hiányzik.</p>'
+       . '</main></body></html>';
+}
+
+set_exception_handler(function (Throwable $e): void {
+    error_log(sprintf(
+        'Kezeletlen hiba: %s @ %s:%d',
+        $e->getMessage(),
+        $e->getFile(),
+        $e->getLine()
+    ));
+    hiba_oldal();
+});
+
+// A vegzetes hibakat (pl. hianyzo fajl) nem a kivetelkezelo fogja el.
+register_shutdown_function(function (): void {
+    $utolso = error_get_last();
+    if ($utolso !== null
+        && in_array($utolso['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+        hiba_oldal();
+    }
+});
+
+/**
  * Adatbazis kapcsolat (lusta inicializalas).
  */
 function db(): PDO

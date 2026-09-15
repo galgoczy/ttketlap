@@ -11,7 +11,15 @@ $sql = 'SELECT email, status, consent_version, consent_at, created_at, unsubscri
      . ($onlyActive ? ' WHERE status = "active"' : '')
      . ' ORDER BY created_at ASC';
 
-$rows = db()->query($sql)->fetchAll();
+try {
+    $rows = db()->query($sql)->fetchAll();
+} catch (Throwable $exception) {
+    // Nem kuldunk fejlebehibas CSV-t: inkabb visszakuldjuk az adminra,
+    // ahol lathato az uzenet es a diagnosztika link.
+    error_log('CSV export hiba: ' . $exception->getMessage());
+    header('Location: /admin/');
+    exit;
+}
 
 $filename = sprintf(
     'feliratkozok-%s-%s.csv',
