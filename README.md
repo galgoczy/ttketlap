@@ -219,6 +219,17 @@ a HTML és a PHP változatlan marad.
 Az oldal mobile first: egy oszlop, 48px-es érintési felületek, a betűméret sehol
 nem kisebb 16px-nél (különben az iPhone ránagyít a mezőkre). Sötét témát is támogat.
 
+**Ha átszínezed, két dologra figyelj:**
+
+- A `--color-control` (a beviteli mezők kerete) **nem** dekoráció: a mező
+  határát látni kell, ezért legalább 3:1 kontraszt kell a kártya hátteréhez
+  képest. Ez külön token, szándékosan sötétebb a dekoratív `--color-border`-nél.
+- A szövegszínek és a hátterek között legalább 4,5:1 kontraszt kell.
+
+A jelenlegi paletta minden párja megfelel a WCAG 2.1 AA szintnek, világos és
+sötét témában egyaránt. Ellenőrizni bármelyik ingyenes kontraszt-kalkulátorral
+lehet (pl. webaim.org/resources/contrastchecker).
+
 ---
 
 ## Ami be van építve a biztonság érdekében

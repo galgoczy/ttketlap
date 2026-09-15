@@ -4,39 +4,72 @@
    Ez az egyetlen hely, ahol a vizualis dontesek elnek.
    Ha megerkezik a vegleges design system, CSAK az alabbi
    :root blokk ertekeit kell atirni - a tobbi kod valtozatlan marad.
+
+   A kontrasztarányok WCAG 2.1 AA szerint ellenorizve:
+   szoveg >= 4.5:1, kezelofelulet-elemek (mezokeret, fokusz) >= 3:1.
+   Ha atszinezed, ezt erdemes ujra megnezni.
    ============================================================= */
 :root {
-  /* Szinek */
-  --color-bg:            #f6f5f2;
-  --color-surface:       #ffffff;
-  --color-surface-muted: #f0eeea;
-  --color-border:        #e0ddd6;
-  --color-text:          #1c1b19;
-  --color-text-muted:    #6b6862;
-  --color-accent:        #2f6d4f;
-  --color-accent-hover:  #255740;
-  --color-accent-soft:   #e6f0ea;
-  --color-on-accent:     #ffffff;
-  --color-danger:        #a33127;
-  --color-danger-soft:   #fbeae8;
-  --color-success:       #2f6d4f;
-  --color-focus:         #2f6d4f;
+  /* --- Semleges skala (meleg szurkek) --- */
+  --color-bg:            #faf9f6;  /* oldal hattere */
+  --color-surface:       #ffffff;  /* kartyak, mezok */
+  --color-surface-muted: #f3f1ec;  /* kiemelt savok, tablazat fejlec */
+  --color-border:        #e5e1d8;  /* dekorativ valasztovonalak */
+  --color-border-strong: #d3cec2;  /* hangsulyosabb elvalasztas */
 
-  /* Tipografia */
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-  --text-xs:   0.8125rem;
-  --text-sm:   0.9375rem;
-  --text-base: 1rem;
-  --text-lg:   1.125rem;
-  --text-xl:   1.375rem;
-  --text-2xl:  1.75rem;
-  --leading-tight: 1.25;
+  /* Kezelofelulet-elemek kerete. Szandekosan sotetebb a dekorativ
+     keretnel: a beviteli mezo hatarat latni kell (3:1 a kovetelmeny). */
+  --color-control:       #9c9487;
+  --color-control-hover: #7d766b;
+
+  --color-text:       #1a1815;
+  --color-text-muted: #67625a;
+
+  /* --- Akcentus (zold) --- */
+  --color-accent:        #2e6b4f;
+  --color-accent-hover:  #245840;
+  --color-accent-active: #1d4835;
+  --color-accent-soft:   #e7f0ea;  /* halvany hatter siker-uzenethez */
+  --color-accent-line:   #bcd6c7;  /* halvany keret ugyanahhoz */
+  --color-on-accent:     #ffffff;  /* szoveg az akcentus felett */
+
+  /* --- Allapotok --- */
+  --color-danger:      #a3312a;
+  --color-danger-soft: #fcebe9;
+  --color-danger-line: #f2cdc8;
+  --color-success:     var(--color-accent);
+  --color-focus:       var(--color-accent);
+
+  /* --- Tipografia ---
+     Rendszerbetuk: gyorsan jelennek meg, nem kell kulso betukeszletet
+     tolteni (amit a .htaccess biztonsagi szabalya amugy sem engedne),
+     es minden magyar ekezetet ismernek. */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+               "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Meretskala: 1rem alapon, kb. 1.2-es lepcsokkel. */
+  --text-xs:   0.8125rem;  /* 13px - apro feliratok */
+  --text-sm:   0.9375rem;  /* 15px - masodlagos szoveg */
+  --text-base: 1rem;       /* 16px - torzsszoveg es MINDEN beviteli mezo
+                              (kisebbnel az iOS ranagyit a mezore) */
+  --text-lg:   1.125rem;   /* 18px */
+  --text-xl:   1.375rem;   /* 22px */
+  --text-2xl:  1.75rem;    /* 28px - oldalcim */
+
+  --leading-tight:  1.2;
+  --leading-snug:   1.4;
   --leading-normal: 1.6;
-  --weight-regular: 400;
-  --weight-medium: 500;
-  --weight-bold: 700;
 
-  /* Terkozok (4px alapraszter) */
+  --weight-regular: 400;
+  --weight-medium:  500;
+  --weight-semibold: 600;
+  --weight-bold:    700;
+
+  --tracking-tight: -0.015em;
+  --tracking-wide:   0.07em;
+
+  /* --- Terkozok (4px alapraszter) --- */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -45,35 +78,52 @@
   --space-6: 2rem;
   --space-7: 3rem;
 
-  /* Formak */
+  /* --- Formak --- */
   --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 20px;
-  --shadow-card: 0 1px 2px rgba(28, 27, 25, 0.05), 0 8px 24px rgba(28, 27, 25, 0.06);
+  --radius-lg: 18px;
+  --radius-pill: 999px;
 
-  /* Egyeb */
-  --container-width: 30rem;
+  /* Retegzett arnyek: egy szoros kontur + egy lagy melyseg. */
+  --shadow-sm: 0 1px 2px rgba(26, 24, 21, 0.06);
+  --shadow-card: 0 1px 2px rgba(26, 24, 21, 0.05),
+                 0 10px 28px -12px rgba(26, 24, 21, 0.14);
+
+  /* --- Egyeb --- */
+  --container-width: 28rem;
+  --container-wide: 64rem;
   --tap-target: 48px;
-  --transition: 150ms ease;
+  --transition: 140ms cubic-bezier(0.2, 0, 0.2, 1);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-bg:            #15171a;
-    --color-surface:       #1e2126;
-    --color-surface-muted: #262a30;
-    --color-border:        #333941;
-    --color-text:          #f2f1ef;
-    --color-text-muted:    #a3a8b0;
-    --color-accent:        #5fb98b;
-    --color-accent-hover:  #7cc9a0;
-    --color-accent-soft:   #1f3a2d;
-    --color-on-accent:     #10231a;
-    --color-danger:        #f08a7e;
-    --color-danger-soft:   #3a221f;
-    --color-success:       #5fb98b;
-    --color-focus:         #5fb98b;
-    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+    --color-bg:            #131519;
+    --color-surface:       #1c1f24;
+    --color-surface-muted: #242830;
+    --color-border:        #30353d;
+    --color-border-strong: #3d434d;
+
+    --color-control:       #646d7b;
+    --color-control-hover: #7c8695;
+
+    --color-text:       #f1f0ed;
+    --color-text-muted: #a2a7b0;
+
+    --color-accent:        #63bc8e;
+    --color-accent-hover:  #7acb9f;
+    --color-accent-active: #8fd6af;
+    --color-accent-soft:   #1c3629;
+    --color-accent-line:   #2c5240;
+    --color-on-accent:     #0d1f16;
+
+    --color-danger:      #f0908a;
+    --color-danger-soft: #3a2320;
+    --color-danger-line: #573431;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35),
+                   0 10px 28px -12px rgba(0, 0, 0, 0.6);
   }
 }
 
@@ -91,6 +141,13 @@ body {
   font-size: var(--text-base);
   line-height: var(--leading-normal);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--color-accent-soft);
+  color: var(--color-text);
 }
 
 img { max-width: 100%; display: block; }
@@ -103,6 +160,10 @@ a:hover { color: var(--color-accent-hover); }
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
+
+/* A mezoknel a sajat fokuszgyurut hasznaljuk (lasd .input:focus),
+   igy nem kerul ket gyuru egymasra. */
+.input:focus-visible { outline: none; }
 
 /* ============================= LAYOUT ============================= */
 /* Mobile first: egy oszlop, kenyelmes oldalso margoval. */
@@ -120,9 +181,17 @@ a:hover { color: var(--color-accent-hover); }
   max-width: var(--container-width);
   margin-inline: auto;
   padding-block: var(--space-6) var(--space-5);
+
+  /* Rovid oldal (urlap, visszajelzes) fuggolegesen kozepre kerul nagy
+     kepernyon. A "safe" kulcsszo miatt hosszu tartalomnal nem vagja le a
+     tetejet; ahol a bongeszo nem ismeri, ott az egesz szabaly kimarad,
+     es marad a felso igazitas. */
+  display: flex;
+  flex-direction: column;
+  justify-content: safe center;
 }
 
-.page__main--wide { max-width: 64rem; }
+.page__main--wide { max-width: var(--container-wide); }
 
 .page__footer {
   width: 100%;
@@ -149,6 +218,8 @@ a:hover { color: var(--color-accent-hover); }
   padding: var(--space-5);
 }
 
+.card + .card { margin-top: var(--space-4); }
+
 @media (min-width: 40rem) {
   .card { padding: var(--space-6); }
 }
@@ -159,22 +230,24 @@ a:hover { color: var(--color-accent-hover); }
   font-size: var(--text-2xl);
   line-height: var(--leading-tight);
   font-weight: var(--weight-bold);
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-tight);
+  text-wrap: balance;
 }
 
 .subtitle {
   margin: 0 0 var(--space-5);
   color: var(--color-text-muted);
   font-size: var(--text-base);
+  text-wrap: pretty;
 }
 
 .eyebrow {
   margin: 0 0 var(--space-2);
   color: var(--color-accent);
   font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-semibold);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-wide);
 }
 
 .prose h2 { font-size: var(--text-lg); margin: var(--space-5) 0 var(--space-2); }
@@ -196,7 +269,8 @@ a:hover { color: var(--color-accent-hover); }
   min-height: var(--tap-target);
   padding: var(--space-3) var(--space-4);
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  /* A keret szandekosan jol lathato: a mezo hatarat latni kell. */
+  border: 1px solid var(--color-control);
   border-radius: var(--radius-md);
   color: var(--color-text);
   /* 16px-nel kisebb betumeret eseten az iOS ranagyit a mezore - ezert 1rem a minimum. */
@@ -207,6 +281,8 @@ a:hover { color: var(--color-accent-hover); }
 
 .input::placeholder { color: var(--color-text-muted); }
 
+.input:hover { border-color: var(--color-control-hover); }
+
 .input:focus {
   outline: none;
   border-color: var(--color-accent);
@@ -214,6 +290,8 @@ a:hover { color: var(--color-accent-hover); }
 }
 
 .input[aria-invalid="true"] { border-color: var(--color-danger); }
+.input[aria-invalid="true"]:focus { box-shadow: 0 0 0 3px var(--color-danger-soft); }
+.input[readonly] { background: var(--color-surface-muted); }
 
 /* Honeypot mezo: valodi felhasznalo soha nem latja. */
 .hp {
@@ -229,18 +307,29 @@ a:hover { color: var(--color-accent-hover); }
   gap: var(--space-3);
   align-items: flex-start;
   margin-bottom: var(--space-5);
+  padding: var(--space-2);
+  margin-left: calc(var(--space-2) * -1);
+  border-radius: var(--radius-sm);
   font-size: var(--text-sm);
+  line-height: var(--leading-snug);
   color: var(--color-text-muted);
   cursor: pointer;
+  transition: background var(--transition);
 }
+
+.checkbox:hover { background: var(--color-surface-muted); }
 
 .checkbox input {
   flex: none;
   width: 1.375rem;
   height: 1.375rem;
-  margin: 1px 0 0;
+  margin: 0;
   accent-color: var(--color-accent);
+  cursor: pointer;
 }
+
+/* A szoveg elso sora essen egybe a negyzet kozepevel. */
+.checkbox > span { padding-top: 0.0625rem; }
 
 /* ============================ GOMBOK ============================ */
 .btn {
@@ -262,22 +351,30 @@ a:hover { color: var(--color-accent-hover); }
   transition: background var(--transition), color var(--transition), border-color var(--transition);
 }
 
+.btn:active { transform: translateY(1px); }
+
 .btn--primary {
   background: var(--color-accent);
   color: var(--color-on-accent);
+  box-shadow: var(--shadow-sm);
 }
 .btn--primary:hover { background: var(--color-accent-hover); color: var(--color-on-accent); }
+.btn--primary:active { background: var(--color-accent-active); }
 
 .btn--secondary {
   background: var(--color-surface);
-  border-color: var(--color-border);
+  border-color: var(--color-control);
   color: var(--color-text);
 }
-.btn--secondary:hover { background: var(--color-surface-muted); color: var(--color-text); }
+.btn--secondary:hover {
+  background: var(--color-surface-muted);
+  border-color: var(--color-control-hover);
+  color: var(--color-text);
+}
 
 .btn--danger {
   background: transparent;
-  border-color: var(--color-border);
+  border-color: var(--color-danger-line);
   color: var(--color-danger);
 }
 .btn--danger:hover { background: var(--color-danger-soft); }
@@ -290,15 +387,30 @@ a:hover { color: var(--color-accent-hover); }
   display: flex;
   gap: var(--space-3);
   padding: var(--space-4);
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
+  line-height: var(--leading-snug);
   margin-bottom: var(--space-5);
 }
 
-.alert--error   { background: var(--color-danger-soft); color: var(--color-danger); }
-.alert--success { background: var(--color-accent-soft); color: var(--color-success); }
+.alert--error {
+  background: var(--color-danger-soft);
+  border-color: var(--color-danger-line);
+  color: var(--color-danger);
+}
+.alert--success {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent-line);
+  color: var(--color-success);
+}
 
-.alert__icon { flex: none; font-size: var(--text-lg); line-height: 1.2; }
+.alert__icon {
+  flex: none;
+  font-size: var(--text-lg);
+  line-height: 1.2;
+  font-weight: var(--weight-bold);
+}
 
 .result { text-align: center; }
 
@@ -310,8 +422,10 @@ a:hover { color: var(--color-accent-hover); }
   place-items: center;
   border-radius: 50%;
   background: var(--color-accent-soft);
+  border: 1px solid var(--color-accent-line);
   color: var(--color-success);
   font-size: var(--text-2xl);
+  line-height: 1;
 }
 
 /* ============================= ADMIN ============================= */
@@ -334,13 +448,17 @@ a:hover { color: var(--color-accent-hover); }
   font-size: var(--text-2xl);
   font-weight: var(--weight-bold);
   line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  font-variant-numeric: tabular-nums;
 }
 
 .stat__label {
+  margin-top: var(--space-1);
   font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
   color: var(--color-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--tracking-wide);
 }
 
 .toolbar {
@@ -376,24 +494,38 @@ a:hover { color: var(--color-accent-hover); }
 
 .table th {
   font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--tracking-wide);
   color: var(--color-text-muted);
   background: var(--color-surface-muted);
 }
+
+.table tbody tr:hover { background: var(--color-surface-muted); }
+.table td { font-variant-numeric: tabular-nums; }
 
 .table tr:last-child td { border-bottom: none; }
 
 .badge {
   display: inline-block;
   padding: 2px var(--space-2);
-  border-radius: 999px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
   font-size: var(--text-xs);
   font-weight: var(--weight-medium);
+  white-space: nowrap;
 }
 
-.badge--active   { background: var(--color-accent-soft); color: var(--color-success); }
-.badge--inactive { background: var(--color-surface-muted); color: var(--color-text-muted); }
+.badge--active {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent-line);
+  color: var(--color-success);
+}
+.badge--inactive {
+  background: var(--color-surface-muted);
+  border-color: var(--color-border-strong);
+  color: var(--color-text-muted);
+}
 
 .pagination {
   display: flex;
