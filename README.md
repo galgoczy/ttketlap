@@ -15,6 +15,18 @@ bármelyik Hostinger tárhelyen.
 | `/adatkezeles.php` | Adatkezelési tájékoztató |
 | `/leiratkozas.php?token=...` | Leiratkozás (egyedi link minden feliratkozónak) |
 | `/admin/` | Jelszavas admin: lista, darabszámok, CSV export, deaktiválás |
+| `/admin/diagnosztika.php` | Rendszerállapot: mi hiányzik, mi nem működik |
+
+### Ha valami nem megy
+
+Lépj be az `/admin/` oldalra, és nyomd meg a **Diagnosztika** gombot. Végigméri
+az adatbázist, a beállításokat és a levélküldést, és magyarul megmondja, mi
+hiányzik. Titkos értékeket (jelszó, kulcs) nem ír ki – csak azt, hogy be
+vannak-e állítva.
+
+A feliratkozó oldalon megjelenő **„Technikai hiba történt"** üzenet szinte
+mindig adatbázis-gond: vagy nem futott le a `sql/schema.sql`, vagy a `config.php`
+adatbázis-adatai hibásak. A diagnosztika ezt pontosan megmutatja.
 
 Mappaszerkezet:
 
