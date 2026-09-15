@@ -169,6 +169,24 @@ navigálni. Válaszd ki azt az **egy** sort, ami rád igaz:
 Kész. Minden `main` ágra pusholás után automatikusan felmegy a `public/` tartalma.
 A folyamatot a repo **Actions** fülén tudod követni.
 
+#### 4.4. Feltöltés indítása kézzel
+
+Nem kell mindig kódot módosítani a feltöltéshez. A repo
+**Actions → Deploy to Hostinger** oldalán a jobb oldali **Run workflow**
+gombbal bármikor újraindítható a `main` ágról.
+
+Erre tipikusan akkor van szükség, ha a feltöltés valamelyik beállítás miatt
+hasalt el (pl. rossz `FTP_SERVER`), és a javítás után újra le kell futtatni –
+a secretek módosítása magától **nem** indít új feltöltést.
+
+#### Gyakori hibák a feltöltésnél
+
+| A naplóban ez látszik | Mi a baj |
+|---|---|
+| `getaddrinfo ENOTFOUND` | Az `FTP_SERVER` címet nem találja. Friss domainnél gyakori: a DNS még nem állt be – írd be helyette a hPanelben látható IP-címet. A cím elé ne kerüljön `ftp://`. |
+| `530 Login authentication failed` | Rossz `FTP_USERNAME` vagy `FTP_PASSWORD`. |
+| Lefut, de az oldal 404 | A fájlok rossz mappába kerültek – lásd a 4.3. pontot a `server-dir` értékéről. |
+
 > A `config.php` szándékosan **nincs** a gitben és a feltöltésből is ki van zárva –
 > így az adatbázis-jelszó soha nem kerül nyilvánosságra, és a feltöltés sem írja felül.
 
