@@ -22,7 +22,12 @@ function erthetobb_hiba(string $uzenet): string
 {
     $magyarazat = match (true) {
         str_contains($uzenet, '[2002]')  => 'Nem érhető el az adatbázis szerver. Ellenőrizd a db_host értékét a config.php-ban (a Hostingeren általában "localhost").',
-        str_contains($uzenet, '[1045]')  => 'Hibás adatbázis felhasználónév vagy jelszó (db_user / db_pass).',
+        str_contains($uzenet, '[1045]')  => 'A MySQL elutasította a belépést. Három dolgot érdemes megnézni: '
+            . '(1) a db_host értéke a Hostingeren "localhost" legyen – ha IP-cím vagy külső név van ott, '
+            . 'a MySQL nem ismeri fel a jogosultságot; '
+            . '(2) a db_user és db_pass pontosan egyezzen a hPanelben látottal; '
+            . '(3) a config.php-ban a jelszó APOSZTRÓFOK között legyen, ne idézőjelben – '
+            . 'idézőjelben a $ jel után álló részt a PHP változónak veszi és eltünteti.',
         str_contains($uzenet, '[1049]')  => 'Nincs ilyen nevű adatbázis (db_name). Ellenőrizd a hPanelben a pontos nevet.',
         str_contains($uzenet, '[1146]')  => 'Hiányzik egy tábla. Futtasd le a sql/schema.sql fájlt phpMyAdminban.',
         str_contains($uzenet, '[1044]')  => 'A felhasználónak nincs joga ehhez az adatbázishoz.',
@@ -82,6 +87,42 @@ ellenoriz('`signup_attempts` tábla', function () {
         ? ['ok', 'megvan']
         : ['hiba', 'Nincs meg. Enélkül a feliratkozás "Technikai hiba" üzenettel elszáll. '
                  . 'Futtasd le a sql/schema.sql fájl MÁSODIK táblájának létrehozását is.'];
+});
+
+ellenoriz('Adatbázis beállítások', function () {
+    global $config;
+    $host = (string) ($config['db_host'] ?? '');
+    $nev  = (string) ($config['db_name'] ?? '');
+    $user = (string) ($config['db_user'] ?? '');
+    $pass = (string) ($config['db_pass'] ?? '');
+
+    $gondok = [];
+
+    // A leggyakoribb elgepeles: felesleges szokoz a masolaskor.
+    foreach (['db_host' => $host, 'db_name' => $nev, 'db_user' => $user, 'db_pass' => $pass] as $kulcs => $ertek) {
+        if ($ertek !== trim($ertek)) {
+            $gondok[] = $kulcs . ' elején vagy végén szóköz van';
+        }
+    }
+
+    if ($host !== '' && $host !== 'localhost' && $host !== '127.0.0.1') {
+        $gondok[] = 'a db_host nem "localhost" – a Hostingeren szinte mindig az a helyes';
+    }
+    if ($pass === '' || str_contains($pass, 'IDE_JON')) {
+        $gondok[] = 'a db_pass nincs kitöltve';
+    }
+
+    $leiras = sprintf(
+        'gép: %s · adatbázis: %s · felhasználó: %s · jelszó: %s',
+        $host !== '' ? $host : '(üres)',
+        $nev  !== '' ? $nev  : '(üres)',
+        $user !== '' ? $user : '(üres)',
+        $pass !== '' ? 'be van állítva (' . strlen($pass) . ' karakter)' : '(üres)'
+    );
+
+    return $gondok
+        ? ['hiba', $leiras . ' — ' . implode('; ', $gondok)]
+        : ['ok', $leiras];
 });
 
 // ---------- Beallitasok ----------
