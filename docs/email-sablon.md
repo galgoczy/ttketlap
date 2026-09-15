@@ -1,72 +1,58 @@
-# Heti étlap – email sablon (kézi kiküldéshez)
+# Heti étlap – levél kiküldése
 
-Az admin felületen az **„Aktívak letöltése (CSV)”** gombbal kapott fájl tartalmazza
-az `email` és a `leiratkozo_link` oszlopot. A körlevél (mail merge) funkcióval
-ezt a két mezőt kell összefűzni a levélbe.
+## A levelet nem kézzel kell összeállítani
 
-> **A megszólítás magázó.** A Pepper House arculata a formális, „Ön" megszólítást
-> írja elő, ezért a rendszer minden szövege ilyen. Az étlap-levélben is érdemes
-> ezt tartani.
+Az adminban van egy **Heti étlap levél** oldal (`/admin/etlap.php`). Kitöltöd a
+napokat, és:
 
-> **Fontos:** minden feliratkozónak a *saját* leiratkozó linkjét kell megkapnia.
-> Ha mindenkinek ugyanazt a linket küldöd ki, akkor bárki le tud iratkoztatni bárkit.
+- rögtön látod, hogy fog kinézni,
+- küldhetsz magadnak egy teszt példányt,
+- a kész HTML-t kimásolhatod a körlevélbe.
+
+A levél a Pepper House arculatát követi: logó, piros sáv, verzál napnevek,
+lábléc leiratkozó linkkel.
 
 ---
 
-## Tárgy
+## Kiküldés körlevélben
+
+1. Admin → **Aktívak letöltése (CSV)**. A fájlban két oszlop kell:
+   `email` és `leiratkozo_link`.
+2. Admin → **Heti étlap levél** → töltsd ki a napokat → másold ki a HTML-t.
+3. A körlevélben a `{{leiratkozo_link}}` helyére a CSV `leiratkozo_link`
+   oszlopát kösd be.
+
+> **Minden feliratkozónak a saját leiratkozó linkje kell.** Ha mindenkinek
+> ugyanaz megy ki, bárki leiratkoztathat bárkit.
+
+Javasolt tárgy (az admin oldal is kiírja):
 
 ```
-Heti étlap – {{hét}}. hét ({{tól}} – {{ig}})
-```
-
-## Szöveges változat
-
-```
-Kedves Feliratkozónk!
-
-Itt a menza étlapja erre a hétre:
-
-Hétfő:     ...
-Kedd:      ...
-Szerda:    ...
-Csütörtök: ...
-Péntek:    ...
-
-Jó étvágyat!
-
---
-Ezt a levelet azért kapja, mert feliratkozott a menza heti étlapjára.
-Leiratkozás: {{leiratkozo_link}}
-```
-
-## HTML változat
-
-```html
-<div style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #1c1b19; max-width: 600px;">
-  <h1 style="font-size: 22px; margin: 0 0 16px;">Heti étlap – {{hét}}. hét</h1>
-
-  <table role="presentation" style="width: 100%; border-collapse: collapse;">
-    <tr><td style="padding: 8px 0; border-bottom: 1px solid #e0ddd6;"><strong>Hétfő</strong><br>...</td></tr>
-    <tr><td style="padding: 8px 0; border-bottom: 1px solid #e0ddd6;"><strong>Kedd</strong><br>...</td></tr>
-    <tr><td style="padding: 8px 0; border-bottom: 1px solid #e0ddd6;"><strong>Szerda</strong><br>...</td></tr>
-    <tr><td style="padding: 8px 0; border-bottom: 1px solid #e0ddd6;"><strong>Csütörtök</strong><br>...</td></tr>
-    <tr><td style="padding: 8px 0;"><strong>Péntek</strong><br>...</td></tr>
-  </table>
-
-  <p style="margin: 24px 0 0; font-size: 13px; color: #6b6862;">
-    Ezt a levelet azért kapja, mert feliratkozott a menza heti étlapjára.<br>
-    <a href="{{leiratkozo_link}}" style="color: #6b6862;">Leiratkozás</a>
-  </p>
-</div>
+Heti étlap – 39. hét (09. 21. – 09. 25.)
 ```
 
 ---
 
-## Kiküldési tippek
+## Amire figyelni kell
 
-- **Címzettek rejtve:** ha nem körlevelet használsz, a címeket **titkos másolatba (BCC)**
-  tedd – különben minden feliratkozó látja a többiek email-címét, ami adatvédelmi
-  incidens.
+- **Címzettek rejtve.** Ha nem körlevelet használsz, a címeket **titkos
+  másolatba (BCC)** tedd – különben minden feliratkozó látja a többiek
+  email-címét, ami adatvédelmi incidens.
 - **Csak az aktív listát** használd. A leiratkozottaknak küldeni jogsértő.
-- Ha hetente 100-nál több levelet küldesz, érdemes SMTP-szolgáltatót
-  (pl. a Hostinger saját email-szolgáltatása) használni, hogy ne kerüljön spambe.
+- **A megszólítás magázó** – az arculat ezt írja elő.
+
+---
+
+## Miért néz ki "régimódian" a levél HTML-je?
+
+A levelezőprogramok, különösen az Outlook, nem úgy jelenítik meg a HTML-t,
+mint egy böngésző: nincs flexbox, nincs grid, és a külső stíluslapot sokszor
+eldobják. Ezért a sablon táblázatos elrendezést és beágyazott stílusokat
+használ. Ez nem hanyagság, hanem a működés feltétele.
+
+**A Jost betűt a levelezők többsége nem tölti be.** A sablon ezért olyan
+betűkre vált, amik a márkához közel állnak és helyben elérhetők: Apple
+eszközökön Futura, Windowson Century Gothic, végül Arial.
+
+**A képeket sok levelezőprogram alapból blokkolja.** A logó ezért nem hordoz
+fontos információt, és van hozzá alt szöveg – a levél kép nélkül is olvasható.

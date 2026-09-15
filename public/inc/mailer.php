@@ -26,6 +26,7 @@ declare(strict_types=1);
  * Reszletek: docs/levelkuldes.md
  */
 
+require_once __DIR__ . '/email_template.php';
 require_once __DIR__ . '/lib/phpmailer/Exception.php';
 require_once __DIR__ . '/lib/phpmailer/PHPMailer.php';
 require_once __DIR__ . '/lib/phpmailer/SMTP.php';
@@ -288,22 +289,22 @@ function send_welcome_email(string $email, string $unsubscribeToken): bool
     {$siteName}
     TXT;
 
-    $safeUrl  = e($unsubscribeUrl);
-    $safeName = e($siteName);
+    $torzs = email_bekezdes(
+            'Kedves Feliratkozónk! Mostantól minden héten elküldjük emailben a menza '
+          . 'étlapját, így előre tudja, mi lesz az ebéd.'
+        )
+        . email_bekezdes(
+            'Az első levél a következő étlapküldéskor érkezik. Ha bármikor meggondolná '
+            . 'magát, minden levél alján talál leiratkozó linket.',
+            true
+        );
 
-    $html = <<<HTML
-    <div style="font-family: Arial, Helvetica, sans-serif; font-size: 16px; line-height: 1.6; color: #1c1b19; max-width: 600px;">
-      <h1 style="font-size: 22px; margin: 0 0 16px;">Sikeres feliratkozás</h1>
-      <p style="margin: 0 0 16px;">
-        Kedves Feliratkozónk! Mostantól minden héten elküldjük emailben a menza
-        étlapját, így előre tudja, mi lesz az ebéd.
-      </p>
-      <p style="margin: 24px 0 0; font-size: 13px; color: #6b6862;">
-        Ezt a levelet azért kapja, mert feliratkozott a(z) {$safeName} heti étlapjára.<br>
-        <a href="{$safeUrl}" style="color: #6b6862;">Leiratkozás</a>
-      </p>
-    </div>
-    HTML;
+    $html = email_keret(
+        'Sikeres feliratkozás',
+        $torzs,
+        'Mostantól minden héten megkapja a menza étlapját.',
+        $unsubscribeUrl
+    );
 
     try {
         send_email($email, $subject, $html, $text, $unsubscribeToken);
