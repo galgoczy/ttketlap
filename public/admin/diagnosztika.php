@@ -231,9 +231,9 @@ render_header('Diagnosztika', true, true);
     <?php endif; ?>
 
     <div class="table-wrap">
-        <table class="table" style="white-space: normal">
+        <table class="table table--wrap">
             <thead>
-                <tr><th style="width: 1%">Állapot</th><th>Mit néz</th><th>Eredmény</th></tr>
+                <tr><th class="table__col-narrow">Állapot</th><th>Mit néz</th><th>Eredmény</th></tr>
             </thead>
             <tbody>
             <?php foreach ($eredmenyek as $e): ?>
@@ -244,7 +244,7 @@ render_header('Diagnosztika', true, true);
                         <?php elseif ($e['allapot'] === 'figyelem'): ?>
                             <span class="badge badge--inactive">figyelem</span>
                         <?php else: ?>
-                            <span class="badge" style="background: var(--color-danger-soft); border-color: var(--color-danger-line); color: var(--color-danger-text)">probléma</span>
+                            <span class="badge badge--danger">probléma</span>
                         <?php endif; ?>
                     </td>
                     <td><?= e($e['cim']) ?></td>
@@ -255,11 +255,11 @@ render_header('Diagnosztika', true, true);
         </table>
     </div>
 
-    <h2 class="title" style="font-size: var(--text-h3); margin-top: var(--space-6)">Hibanapló</h2>
+    <h2 class="title section-title">Hibanapló</h2>
     <?php if ($naploSorok): ?>
         <p class="subtitle">Az utolsó <?= count($naploSorok) ?> bejegyzés. A legfrissebb van alul.</p>
-        <div class="table-wrap" style="padding: var(--space-4)">
-            <pre style="margin: 0; font-family: var(--font-mono); font-size: var(--text-xs); white-space: pre-wrap; word-break: break-word"><?= e(implode("\n", $naploSorok)) ?></pre>
+        <div class="table-wrap table-wrap--padded">
+            <pre class="log"><?= e(implode("\n", $naploSorok)) ?></pre>
         </div>
     <?php else: ?>
         <div class="card empty">
@@ -269,7 +269,7 @@ render_header('Diagnosztika', true, true);
         </div>
     <?php endif; ?>
 
-    <div class="toolbar" style="margin-top: var(--space-6)">
+    <div class="toolbar mt-6">
         <a class="btn btn--secondary btn--small" href="/admin/">Vissza a feliratkozókhoz</a>
     </div>
 </div>

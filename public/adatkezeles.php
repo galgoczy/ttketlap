@@ -64,7 +64,7 @@ render_header('Adatkezelési tájékoztató');
         Külső hírlevél-szolgáltatót nem használunk.
     </p>
 
-    <p style="margin-top: var(--space-6)">
+    <p class="mt-6">
         <a class="btn btn--secondary" href="/">Vissza a feliratkozáshoz</a>
     </p>
 </div>

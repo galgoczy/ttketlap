@@ -152,7 +152,7 @@ render_header('Feliratkozók', true, true);
                 Emiatt a lista és a darabszámok üresek. Nyisd meg a
                 <a href="/admin/diagnosztika.php">diagnosztika oldalt</a> – az pontosan
                 megmondja, mi hiányzik.<br>
-                <span style="font-size: var(--text-xs)"><?= e($dbHiba) ?></span>
+                <span class="text-xs"><?= e($dbHiba) ?></span>
             </span>
         </div>
     <?php endif; ?>
@@ -187,13 +187,14 @@ render_header('Feliratkozók', true, true);
     <div class="toolbar">
         <a class="btn btn--primary btn--small" href="/admin/export.php?tipus=aktiv">Aktívak letöltése (CSV)</a>
         <a class="btn btn--secondary btn--small" href="/admin/export.php?tipus=mind">Teljes lista (CSV)</a>
-        <form method="post" action="/admin/" style="display: inline">
+        <form method="post" action="/admin/" class="inline-form">
             <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
             <button class="btn btn--secondary btn--small btn--inline" type="submit" name="send_test" value="1">
                 Teszt levél küldése
             </button>
         </form>
         <a class="btn btn--primary btn--small" href="/admin/etlap.php">Heti étlap levél</a>
+        <a class="btn btn--primary btn--small" href="/admin/cimlista.php">Címlista másolása</a>
         <a class="btn btn--secondary btn--small" href="/admin/diagnosztika.php">Diagnosztika</a>
         <a class="btn btn--secondary btn--small" href="/admin/logout.php">Kilépés</a>
     </div>

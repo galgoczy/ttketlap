@@ -14,13 +14,22 @@ lábléc leiratkozó linkkel.
 
 ---
 
-## Kiküldés körlevélben
+## Kiküldés a saját levelezőprogramból
 
-1. Admin → **Aktívak letöltése (CSV)**. A fájlban két oszlop kell:
-   `email` és `leiratkozo_link`.
-2. Admin → **Heti étlap levél** → töltsd ki a napokat → másold ki a HTML-t.
-3. A körlevélben a `{{leiratkozo_link}}` helyére a CSV `leiratkozo_link`
-   oszlopát kösd be.
+1. Admin → **Címlista másolása**. Innen az aktív címek egy sorban
+   kimásolhatók, vesszővel vagy pontosvesszővel elválasztva (az Outlook
+   asztali alkalmazása pontosvesszőt vár).
+2. Admin → **Heti étlap levél** → töltsd ki a napokat → **HTML másolása**.
+3. A levelezőprogramban a címeket **titkos másolatba (BCC)** illeszd be.
+
+> **A címzett mezőbe soha ne kerüljenek a címek.** Onnan minden feliratkozó
+> látja a többiek email-címét – ez adatvédelmi incidens, amit be kell jelenteni.
+
+## Kiküldés körlevéllel
+
+Ha körlevelet használsz, az **Aktívak letöltése (CSV)** a jobb kiindulás: abban
+ott van az `email` és a `leiratkozo_link` oszlop is. A HTML-ben a
+`{{leiratkozo_link}}` helykitöltő helyére ez utóbbit kösd be.
 
 > **Minden feliratkozónak a saját leiratkozó linkje kell.** Ha mindenkinek
 > ugyanaz megy ki, bárki leiratkoztathat bárkit.

@@ -759,3 +759,76 @@ a:hover { color: var(--color-accent-hover); }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* ======================= SEGEDOSZTALYOK =======================
+   A .htaccess biztonsagi szabalya (style-src 'self') nem engedi a
+   HTML-be irt style="..." attributumot - az eles oldalon nemán
+   hatastalan maradna. Ezert ami korabban ott volt, az itt van.
+   ============================================================= */
+.mt-5 { margin-top: var(--space-5); }
+.mt-6 { margin-top: var(--space-6); }
+.m-0  { margin: 0; }
+
+/* Szakaszcim a hosszabb admin oldalakon. */
+.section-title {
+  font-size: var(--text-h3);
+  margin-top: var(--space-6);
+}
+
+/* Apro magyarazo szoveg mezo alatt. */
+.hint {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.text-xs { font-size: var(--text-xs); }
+
+/* Kimasolhato kod/cim lista. */
+.code-area {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+}
+
+textarea.input {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+/* Level elonezet kerete. */
+.preview-frame {
+  display: block;
+  width: 100%;
+  height: 700px;
+  border: 0;
+  background: var(--color-bg);
+}
+
+.table-wrap--flush { padding: 0; overflow: hidden; }
+.table-wrap--padded { padding: var(--space-4); }
+
+/* Diagnosztika: a hosszu magyarazatok torjenek sorba. */
+.table--wrap { white-space: normal; }
+.table__col-narrow { width: 1%; }
+
+/* Hibanaplo kiirasa. */
+.log {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Tablazatcellaba agyazott urlap. */
+.inline-form { display: inline; }
+
+/* Figyelmeztetes, ami nem hiba - a marka pirosaval jelolve. */
+.alert--note { border-left-color: var(--color-accent); }
+
+.badge--danger {
+  background: var(--color-danger-soft);
+  border-color: var(--color-danger-line);
+  color: var(--color-danger-text);
+}

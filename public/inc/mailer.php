@@ -277,26 +277,23 @@ function send_welcome_email(string $email, string $unsubscribeToken): bool
     $subject = 'Sikeres feliratkozás – ' . $siteName;
 
     $text = <<<TXT
-    Kedves Feliratkozónk!
+    Kedves Feliratkozónk! Mostantól minden héten elküldjük emailben étlapunkat.
 
-    Sikeresen feliratkozott a heti étlapra. Mostantól minden héten elküldjük
-    emailben, mi lesz az ebéd.
+    Az első levél a következő étlapküldéskor érkezik. Ha bármikor meggondolná
+    magát, természetesen a levél alján talál leiratkozó linket.
 
-    Ha mégsem kéri, itt tud leiratkozni:
-    {$unsubscribeUrl}
+    Leiratkozás: {$unsubscribeUrl}
 
     Üdvözlettel,
     {$siteName}
     TXT;
 
     $torzs = email_bekezdes(
-            'Kedves Feliratkozónk! Mostantól minden héten elküldjük emailben a menza '
-          . 'étlapját, így előre tudja, mi lesz az ebéd.'
+            'Kedves Feliratkozónk! Mostantól minden héten elküldjük emailben étlapunkat.'
         )
         . email_bekezdes(
             'Az első levél a következő étlapküldéskor érkezik. Ha bármikor meggondolná '
-            . 'magát, minden levél alján talál leiratkozó linket.',
-            true
+            . 'magát, természetesen a levél alján talál leiratkozó linket.'
         );
 
     $html = email_keret(

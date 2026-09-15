@@ -14,6 +14,16 @@ RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
     Header always set Strict-Transport-Security "max-age=31536000"
 </IfModule>
 
+# ---- Kivetel a level elonezetehez ----
+# A levelek beagyazott (inline) stilusokra epulnek, mert a levelezoprogramok
+# nem ertik a kulso stiluslapot. Az elonezet ezert kap egy sajat szabalyt:
+# a stilusokat engedi, minden mast tilt - szkriptet, kepet, kereteket.
+<Files "etlap-elonezet.php">
+    <IfModule mod_headers.c>
+        Header always set Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'self'"
+    </IfModule>
+</Files>
+
 # ---- Erzekeny fajlok tiltasa ----
 <FilesMatch "^(config\.php|config\.sample\.php|\.env|.*\.sql|.*\.md)$">
     Require all denied

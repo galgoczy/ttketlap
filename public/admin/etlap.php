@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/auth.php';
-require __DIR__ . '/../inc/mailer.php';
+require __DIR__ . '/../inc/email_template.php';
 require_admin();
 
 /**
@@ -40,18 +40,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $napok[$nap] = trim((string) ($_POST['nap'][$i] ?? ''));
         }
 
-        if (isset($_POST['teszt'])) {
-            $cel = cfg('contact_email');
-            try {
-                $html = etlap_level_html($hetCim, $bevezeto, $napok, unsubscribe_url(str_repeat('0', 64)));
-                $szoveg = etlap_level_szoveg($hetCim, $bevezeto, $napok, unsubscribe_url(str_repeat('0', 64)));
-                send_email($cel, etlap_targy($hetCim), $html, $szoveg);
-                $uzenet = 'success:Teszt levél elküldve ide: ' . $cel;
-            } catch (Throwable $exception) {
-                error_log('Étlap teszt hiba: ' . $exception->getMessage());
-                $uzenet = 'error:A küldés nem sikerült: ' . $exception->getMessage();
-            }
-        }
     }
 }
 
@@ -111,6 +99,10 @@ function etlap_level_szoveg(string $hetCim, string $bevezeto, array $napok, stri
 // A kimasolhato HTML-ben a leiratkozo linket helykitoltovel adjuk meg,
 // hogy a korlevel minden cimzettnek a sajatjat helyettesitse be.
 $masolhatoHtml = etlap_level_html($hetCim, $bevezeto, $napok, '{{leiratkozo_link}}');
+
+// Az elonezetet kulon oldal jeleniti meg (lasd etlap-elonezet.php), ezert
+// a kesz HTML-t a munkamenetbe tesszuk - igy nem kell URL-ben atadni.
+$_SESSION['etlap_elonezet'] = etlap_level_html($hetCim, $bevezeto, $napok, '#');
 $vanTartalom   = array_filter($napok, fn($v) => trim($v) !== '') !== [];
 
 render_header('Heti étlap levél', true, true);
@@ -120,8 +112,8 @@ render_header('Heti étlap levél', true, true);
     <p class="eyebrow">Admin</p>
     <h1 class="title">Heti étlap levél</h1>
     <p class="subtitle">
-        Töltse ki a napokat, és a kész levelet alul rögtön látja. Küldhet magának
-        egy teszt példányt, a végleges HTML-t pedig kimásolhatja a körlevélbe.
+        Töltse ki a napokat, és a kész levelet alul rögtön látja. A HTML-t
+        kimásolhatja a levelezőprogramjába. A kiküldés nem innen történik.
     </p>
 
     <?php if ($uzenet !== ''): ?>
@@ -151,52 +143,50 @@ render_header('Heti étlap levél', true, true);
                 <div class="field">
                     <label class="label" for="nap<?= $i ?>"><?= e($nap) ?></label>
                     <textarea class="input" id="nap<?= $i ?>" name="nap[<?= $i ?>]" rows="2"
-                              style="resize: vertical; line-height: 1.5"
                               placeholder="Leves&#10;Főétel"><?= e($napok[$nap] ?? '') ?></textarea>
                 </div>
             <?php endforeach; ?>
 
-            <div class="toolbar" style="margin: 0">
+            <div class="toolbar m-0">
                 <button class="btn btn--primary btn--small btn--inline" type="submit">Előnézet frissítése</button>
-                <button class="btn btn--secondary btn--small btn--inline" type="submit" name="teszt" value="1">
-                    Teszt levél magamnak
-                </button>
             </div>
         </div>
     </form>
 
     <?php if ($vanTartalom): ?>
-        <h2 class="title" style="font-size: var(--text-h3); margin-top: var(--space-6)">Így fog kinézni</h2>
+        <h2 class="title section-title">Így fog kinézni</h2>
         <p class="subtitle">
             A levelezőprogramok kissé eltérően jelenítik meg – ezért érdemes a
             teszt levelet is megnézni a saját postafiókjában.
         </p>
-        <div class="table-wrap" style="padding: 0; overflow: hidden">
-            <iframe title="A levél előnézete"
-                    style="width: 100%; height: 700px; border: 0; display: block; background: #f8f7f5"
-                    srcdoc="<?= e($masolhatoHtml) ?>"></iframe>
+        <div class="table-wrap table-wrap--flush">
+            <iframe title="A levél előnézete" class="preview-frame"
+                    src="/admin/etlap-elonezet.php"></iframe>
         </div>
 
-        <h2 class="title" style="font-size: var(--text-h3); margin-top: var(--space-6)">A kész HTML</h2>
+        <h2 class="title section-title">A kész HTML</h2>
         <p class="subtitle">
             Ezt másolja a körlevélbe. A <code>{{leiratkozo_link}}</code> helyére a
             körlevél minden címzettnél a saját linkjét teszi be – ez a CSV
             <code>leiratkozo_link</code> oszlopa.
         </p>
         <div class="field">
-            <textarea class="input" id="html" rows="10" readonly
-                      style="font-family: var(--font-mono); font-size: var(--text-xs); line-height: 1.5"
-                      onclick="this.select()"><?= e($masolhatoHtml) ?></textarea>
+            <textarea class="input code-area" id="html" rows="10" readonly data-select-on-click><?= e($masolhatoHtml) ?></textarea>
         </div>
-        <p class="subtitle" style="font-size: var(--text-xs)">
+        <button class="btn btn--primary btn--small btn--inline" type="button" data-copy-target="html">
+            HTML másolása
+        </button>
+        <p class="subtitle text-xs">
             Tárgynak ezt javasoljuk: <strong><?= e(etlap_targy($hetCim)) ?></strong>
         </p>
     <?php endif; ?>
 
-    <div class="toolbar" style="margin-top: var(--space-6)">
+    <div class="toolbar mt-6">
         <a class="btn btn--secondary btn--small" href="/admin/">Vissza a feliratkozókhoz</a>
+        <a class="btn btn--secondary btn--small" href="/admin/cimlista.php">Címlista másolása</a>
         <a class="btn btn--secondary btn--small" href="/admin/export.php?tipus=aktiv">Aktívak letöltése (CSV)</a>
     </div>
 </div>
 
+<script src="/assets/js/admin.js?v=1" defer></script>
 <?php render_footer(); ?>
