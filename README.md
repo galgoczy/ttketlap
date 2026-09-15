@@ -197,6 +197,7 @@ a secretek módosítása magától **nem** indít új feltöltést.
 |---|---|
 | `getaddrinfo ENOTFOUND` | Az `FTP_SERVER` címet nem találja. Friss domainnél gyakori: a DNS még nem állt be – írd be helyette a hPanelben látható IP-címet. A cím elé ne kerüljön `ftp://`. |
 | `530 Login authentication failed` | Rossz `FTP_USERNAME` vagy `FTP_PASSWORD`. |
+| `Timeout (control socket)` | A tárhely FTP-je épp nem válaszolt. Ez nem beállítási hiba – a workflow magától újrapróbálja egyszer. Ha másodszor sem megy, indítsd el kézzel pár perc múlva. |
 | Lefut, de az oldal 404 | A fájlok rossz mappába kerültek – lásd a 4.3. pontot a `server-dir` értékéről. |
 
 > A `config.php` szándékosan **nincs** a gitben és a feltöltésből is ki van zárva –

@@ -26,7 +26,12 @@ jobs:
       - name: PHP szintaxis ellenorzes
         run: find public -name '*.php' -print0 | xargs -0 -n1 php -l
 
+      # A tarhely FTP-je nehany masodpercre elerhetetlenne valhat. Ez nem
+      # beallitasi hiba, ezert az elso probalkozast nem engedjuk a futast
+      # megbuktatni - ha kell, egyszer ujraprobaljuk.
       - name: Feltoltes FTP-n
+        id: ftp
+        continue-on-error: true
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -39,8 +44,27 @@ jobs:
           # a public_html mappara korlatozott FTP-fiokot hasznalsz.
           # Ha megis a fo FTP-fiokkal csatlakozol, lasd a README 4.3 pontjat.
           server-dir: /
+          # Alapbol 30 masodperc. A tarhely lassabban is valaszolhat.
+          timeout: 60000
           # A config.php a szerveren el (adatbazis jelszo, admin hash),
           # ezert sem feltolteni, sem torolni nem szabad.
+          exclude: |
+            **/config.php
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+
+      - name: Ujraprobalkozas, ha az elso nem sikerult
+        if: steps.ftp.outcome == 'failure'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          local-dir: ./public/
+          server-dir: /
+          timeout: 60000
           exclude: |
             **/config.php
             **/.git*
