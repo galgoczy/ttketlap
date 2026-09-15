@@ -1,0 +1,48 @@
+name: Deploy to Hostinger
+
+# Minden main-re torteno push utan automatikusan kiteszi a public/ mappa
+# tartalmat a Hostinger tarhelyre FTP-n keresztul.
+# Kezzel is indithato a GitHub "Actions" fulen (Run workflow).
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-hostinger
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: FTP feltoltes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Kod letoltese
+        uses: actions/checkout@v4
+
+      - name: PHP szintaxis ellenorzes
+        run: find public -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Feltoltes FTP-n
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          local-dir: ./public/
+          # Hova masolja a fajlokat a tarhelyen. A "/" azt jelenti: oda, ahova
+          # az FTP-fiok belep. Ez a helyes ertek, ha a README 4.1 szerint kulon,
+          # a public_html mappara korlatozott FTP-fiokot hasznalsz.
+          # Ha megis a fo FTP-fiokkal csatlakozol, lasd a README 4.3 pontjat.
+          server-dir: /
+          # A config.php a szerveren el (adatbazis jelszo, admin hash),
+          # ezert sem feltolteni, sem torolni nem szabad.
+          exclude: |
+            **/config.php
+            **/.git*
+            **/.git*/**
+            **/node_modules/**

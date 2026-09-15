@@ -1,0 +1,35 @@
+# ---- HTTPS kenyszeritese ----
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+# ---- Biztonsagi fejlecek ----
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    # Minden forras sajat tarhelyrol - a betukeszlet is. Nincs kulso kivetel.
+    Header always set Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self'; font-src 'self'; script-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'"
+    Header always set Strict-Transport-Security "max-age=31536000"
+</IfModule>
+
+# ---- Erzekeny fajlok tiltasa ----
+<FilesMatch "^(config\.php|config\.sample\.php|\.env|.*\.sql|.*\.md)$">
+    Require all denied
+</FilesMatch>
+
+# ---- Konyvtarlistazas kikapcsolasa ----
+Options -Indexes
+
+# ---- Statikus fajlok gyorsitotarazasa ----
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    # A betufajlok nevei verziozottak, igy hosszan gyorsitotarazhatok.
+    ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>
+
+ErrorDocument 404 /index.php

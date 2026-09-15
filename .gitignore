@@ -1,0 +1,8 @@
+# A valodi konfiguracio (adatbazis jelszo, admin hash) SOHA nem kerul a gitbe.
+public/inc/config.php
+
+# Rendszer fajlok
+.DS_Store
+Thumbs.db
+*.log
+.ftp-deploy-sync-state.json
