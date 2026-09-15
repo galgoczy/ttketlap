@@ -13,7 +13,7 @@ render_header('Adatkezelési tájékoztató');
         Hatályos verzió: <?= e(cfg('consent_version')) ?>
     </p>
 
-    <h2>Ki kezeli az adataidat?</h2>
+    <h2>Ki kezeli az Ön adatait?</h2>
     <p>
         <?= e(cfg('operator_name')) ?> (<?= e(cfg('operator_address')) ?>),
         elérhetőség: <a href="mailto:<?= e(cfg('contact_email')) ?>"><?= e(cfg('contact_email')) ?></a>.
@@ -21,40 +21,40 @@ render_header('Adatkezelési tájékoztató');
 
     <h2>Milyen adatot kezelünk?</h2>
     <ul>
-        <li>az email-címedet,</li>
+        <li>az email-címét,</li>
         <li>a feliratkozás időpontját és az elfogadott tájékoztató verziószámát,</li>
         <li>a feliratkozás státuszát (aktív vagy leiratkozott),</li>
-        <li>a feliratkozáskori IP-címed titkosított lenyomatát (visszaélések megelőzésére).</li>
+        <li>a feliratkozáskori IP-címének titkosított lenyomatát (visszaélések megelőzésére).</li>
     </ul>
 
     <h2>Miért kezeljük?</h2>
     <p>
-        Kizárólag azért, hogy elküldjük neked a menza heti étlapját.
-        Az adatkezelés jogalapja a te hozzájárulásod (GDPR 6. cikk (1) a) pont).
-        Az email-címedet reklám céljára nem használjuk, és harmadik félnek nem adjuk át.
+        Kizárólag azért, hogy elküldjük Önnek a menza heti étlapját.
+        Az adatkezelés jogalapja az Ön hozzájárulása (GDPR 6. cikk (1) a) pont).
+        Az email-címét reklám céljára nem használjuk, és harmadik félnek nem adjuk át.
     </p>
 
     <h2>Meddig kezeljük?</h2>
     <p>
-        A hozzájárulásod visszavonásáig. Leiratkozás után a címed inaktív státuszba kerül,
+        A hozzájárulása visszavonásáig. Leiratkozás után a címe inaktív státuszba kerül,
         és többé nem küldünk rá levelet. A leiratkozás tényét a jogszerű működés igazolása
         érdekében megőrizzük, de kérésre az adatot véglegesen töröljük.
     </p>
 
-    <h2>Hogyan iratkozhatsz le?</h2>
+    <h2>Hogyan iratkozhat le?</h2>
     <p>
-        Minden kiküldött levél alján találsz egy egyedi leiratkozási linket.
-        Leiratkozni bármikor, indokolás nélkül, díjmentesen tudsz.
-        Írhatsz nekünk a <a href="mailto:<?= e(cfg('contact_email')) ?>"><?= e(cfg('contact_email')) ?></a>
+        Minden kiküldött levél alján talál egy egyedi leiratkozási linket.
+        Leiratkozni bármikor, indokolás nélkül, díjmentesen tud.
+        Írhat nekünk a <a href="mailto:<?= e(cfg('contact_email')) ?>"><?= e(cfg('contact_email')) ?></a>
         címre is.
     </p>
 
-    <h2>Milyen jogaid vannak?</h2>
+    <h2>Milyen jogai vannak?</h2>
     <ul>
-        <li>tájékoztatást kérhetsz a rólad kezelt adatokról,</li>
-        <li>kérheted az adataid helyesbítését vagy törlését,</li>
-        <li>bármikor visszavonhatod a hozzájárulásodat,</li>
-        <li>panasszal fordulhatsz a Nemzeti Adatvédelmi és Információszabadság Hatósághoz
+        <li>tájékoztatást kérhet az Önről kezelt adatokról,</li>
+        <li>kérheti adatai helyesbítését vagy törlését,</li>
+        <li>bármikor visszavonhatja a hozzájárulását,</li>
+        <li>panasszal fordulhat a Nemzeti Adatvédelmi és Információszabadság Hatósághoz
             (NAIH, 1055 Budapest, Falk Miksa utca 9-11., <a href="https://naih.hu" target="_blank" rel="noopener">naih.hu</a>).</li>
     </ul>
 

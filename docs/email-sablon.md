@@ -4,6 +4,10 @@ Az admin felületen az **„Aktívak letöltése (CSV)”** gombbal kapott fájl
 az `email` és a `leiratkozo_link` oszlopot. A körlevél (mail merge) funkcióval
 ezt a két mezőt kell összefűzni a levélbe.
 
+> **A megszólítás magázó.** A Pepper House arculata a formális, „Ön" megszólítást
+> írja elő, ezért a rendszer minden szövege ilyen. Az étlap-levélben is érdemes
+> ezt tartani.
+
 > **Fontos:** minden feliratkozónak a *saját* leiratkozó linkjét kell megkapnia.
 > Ha mindenkinek ugyanazt a linket küldöd ki, akkor bárki le tud iratkoztatni bárkit.
 
@@ -18,7 +22,7 @@ Heti étlap – {{hét}}. hét ({{tól}} – {{ig}})
 ## Szöveges változat
 
 ```
-Szia!
+Kedves Feliratkozónk!
 
 Itt a menza étlapja erre a hétre:
 
@@ -31,7 +35,7 @@ Péntek:    ...
 Jó étvágyat!
 
 --
-Ezt a levelet azért kapod, mert feliratkoztál a menza heti étlapjára.
+Ezt a levelet azért kapja, mert feliratkozott a menza heti étlapjára.
 Leiratkozás: {{leiratkozo_link}}
 ```
 
@@ -50,7 +54,7 @@ Leiratkozás: {{leiratkozo_link}}
   </table>
 
   <p style="margin: 24px 0 0; font-size: 13px; color: #6b6862;">
-    Ezt a levelet azért kapod, mert feliratkoztál a menza heti étlapjára.<br>
+    Ezt a levelet azért kapja, mert feliratkozott a menza heti étlapjára.<br>
     <a href="{{leiratkozo_link}}" style="color: #6b6862;">Leiratkozás</a>
   </p>
 </div>

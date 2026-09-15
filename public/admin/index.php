@@ -9,7 +9,7 @@ $error = '';
 // --- Belepes ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     if (!csrf_valid($_POST['csrf_token'] ?? null)) {
-        $error = 'Az űrlap érvényessége lejárt, próbáld újra.';
+        $error = 'Az űrlap érvényessége lejárt, próbálja újra.';
     } elseif (admin_login_valid((string) ($_POST['user'] ?? ''), (string) ($_POST['password'] ?? ''))) {
         session_regenerate_id(true);
         $_SESSION['admin_logged_in'] = true;
@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_id'])) {
 $mailNotice = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_test'])) {
     if (!csrf_valid($_POST['csrf_token'] ?? null)) {
-        $mailNotice = 'error:Az űrlap érvényessége lejárt, próbáld újra.';
+        $mailNotice = 'error:Az űrlap érvényessége lejárt, próbálja újra.';
     } elseif (!mail_configured()) {
         $mailNotice = 'error:A levélküldés nincs beállítva a config.php-ban. Lásd: docs/levelkuldes.md';
     } else {

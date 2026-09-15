@@ -18,18 +18,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $honey   = trim((string) ($_POST['website'] ?? ''));
 
     if (!csrf_valid($_POST['csrf_token'] ?? null)) {
-        $errors[] = 'Az űrlap érvényessége lejárt. Kérjük, próbáld újra.';
+        $errors[] = 'Az űrlap érvényessége lejárt. Kérjük, próbálja újra.';
     } elseif ($honey !== '') {
         // Bot toltotte ki a rejtett mezot - ugy teszunk, mintha sikerult volna.
         $succeeded = true;
     } elseif (!valid_email($email)) {
-        $errors[] = 'Kérjük, adj meg egy érvényes email-címet.';
+        $errors[] = 'Kérjük, adjon meg egy érvényes email-címet.';
     } elseif (!$consent) {
-        $errors[] = 'A feliratkozáshoz el kell fogadnod az adatkezelési tájékoztatót.';
+        $errors[] = 'A feliratkozáshoz el kell fogadnia az adatkezelési tájékoztatót.';
     } else {
         try {
             if (rate_limit_exceeded()) {
-                $errors[] = 'Túl sok próbálkozás történt. Kérjük, próbáld újra később.';
+                $errors[] = 'Túl sok próbálkozás történt. Kérjük, próbálja újra később.';
             } else {
                 log_signup_attempt();
                 $token = subscribe($email);
@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } catch (Throwable $exception) {
             error_log('Feliratkozasi hiba: ' . $exception->getMessage());
-            $errors[] = 'Technikai hiba történt. Kérjük, próbáld újra néhány perc múlva.';
+            $errors[] = 'Technikai hiba történt. Kérjük, próbálja újra néhány perc múlva.';
         }
     }
 }
@@ -99,8 +99,8 @@ render_header('Feliratkozás a heti étlapra');
         <div class="result__icon" aria-hidden="true">✓</div>
         <h1 class="title">Sikeres feliratkozás</h1>
         <p class="subtitle">
-            Mostantól elküldjük neked emailben a menza heti étlapját.
-            Leiratkozni bármikor tudsz a levelek alján található linkkel.
+            Mostantól elküldjük Önnek emailben a menza heti étlapját.
+            Leiratkozni bármikor tud a levelek alján található linkkel.
         </p>
     </div>
 
@@ -108,10 +108,10 @@ render_header('Feliratkozás a heti étlapra');
 
     <div class="card">
         <p class="eyebrow">Menza</p>
-        <h1 class="title">Kérd a heti étlapot emailben</h1>
+        <h1 class="title">Kérje a heti étlapot emailben</h1>
         <p class="subtitle">
-            Iratkozz fel, és minden héten elküldjük a menza étlapját &ndash;
-            így előre tudod, mi lesz az ebéd.
+            Iratkozzon fel, és minden héten elküldjük a menza étlapját &ndash;
+            így előre tudja, mi lesz az ebéd.
         </p>
 
         <?php foreach ($errors as $error): ?>
@@ -126,7 +126,7 @@ render_header('Feliratkozás a heti étlapra');
 
             <!-- Honeypot: botok elleni rejtett mezo. -->
             <div class="hp" aria-hidden="true">
-                <label for="website">Ezt a mezőt hagyd üresen</label>
+                <label for="website">Ezt a mezőt hagyja üresen</label>
                 <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
             </div>
 

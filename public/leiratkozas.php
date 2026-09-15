@@ -38,7 +38,7 @@ if (!preg_match('/^[a-f0-9]{64}$/', $token)) {
         }
     } catch (Throwable $exception) {
         error_log('Leiratkozasi hiba: ' . $exception->getMessage());
-        $error = 'Technikai hiba történt. Kérjük, próbáld újra néhány perc múlva.';
+        $error = 'Technikai hiba történt. Kérjük, próbálja újra néhány perc múlva.';
     }
 }
 
@@ -54,23 +54,23 @@ render_header('Leiratkozás', true);
         <span><?= e($error) ?></span>
     </div>
     <p class="subtitle">
-        Ha segítségre van szükséged, írj nekünk:
+        Ha segítségre van szüksége, írjon nekünk:
         <a href="mailto:<?= e(cfg('contact_email')) ?>"><?= e(cfg('contact_email')) ?></a>
     </p>
 
 <?php elseif ($done): ?>
 
     <div class="result__icon" aria-hidden="true">✓</div>
-    <h1 class="title">Leiratkoztál</h1>
+    <h1 class="title">Leiratkozott</h1>
     <p class="subtitle">
         Erre a címre többé nem küldünk heti étlapot.
-        Ha meggondolnád magad, bármikor újra feliratkozhatsz.
+        Ha meggondolná magát, bármikor újra feliratkozhat.
     </p>
     <a class="btn btn--secondary" href="/">Vissza a feliratkozáshoz</a>
 
 <?php else: ?>
 
-    <h1 class="title">Biztosan leiratkozol?</h1>
+    <h1 class="title">Biztosan leiratkozik?</h1>
     <p class="subtitle">
         A(z) <strong><?= e($subscriber['email']) ?></strong> címre ezután
         nem küldjük tovább a heti étlapot.

@@ -26,6 +26,7 @@ public/            ← ez kerül ki a tárhely public_html mappájába
   admin/             adminfelület
   inc/               közös PHP kód, levélküldés + a konfiguráció (kívülről nem elérhető)
   assets/css/app.css MINDEN vizuális beállítás egy helyen
+  assets/fonts/      Jost betűkészlet (saját tárhelyről)
 sql/schema.sql     adatbázis tábla
 docs/              email sablon, levélküldés, QR-kód útmutató
 tools/             jelszó-hash generáló (csak helyben, nem kerül fel a tárhelyre)
@@ -223,19 +224,28 @@ Ha frissül a design system, a `--ph-*` blokkot egy az egyben ki lehet cserélni
 
 ### Betűtípus
 
-A rendszer a **Jost** betűtípust használja a Google Fontsról. Ez a design system
-saját döntése: a márka betűje egy Futura-családbeli geometrikus talpatlan, a
-licencelt változat nem állt rendelkezésre, és a Jost ehhez a legközelebbi
+A rendszer a **Jost** betűtípust használja (SIL Open Font License). Ez a design
+system saját döntése: a márka betűje egy Futura-családbeli geometrikus talpatlan,
+a licencelt változat nem állt rendelkezésre, és a Jost ehhez a legközelebbi
 szabadon használható megfelelő. **Ha megvan a licencelt márkabetű, cserélhető** –
-egy helyen, a `--font-sans` tokenben.
+a `--font-sans` tokenben és a `@font-face` blokkokban.
 
-> **Érdemes megfontolni: a betű saját tárhelyre költöztetése.**
-> A Google Fonts betöltése minden látogató IP-címét elküldi a Google-nak.
-> Európában ez adatvédelmi szempontból vitatott, és egy adatkezelési
-> tájékoztatóval rendelkező oldalnál kellemetlen kérdés lehet. A `.woff2`
-> fájlokat letöltve és a tárhelyre feltöltve a probléma megszűnik, az oldal
-> pedig gyorsabb is lesz. Ilyenkor a `.htaccess`-ben a két Google Fonts
-> kivétel is kivehető a Content-Security-Policy sorból.
+A betűfájlok **saját tárhelyen** vannak
+([`public/assets/fonts/`](public/assets/fonts/)), nem a Google Fontsról töltenek be.
+Ennek két oka van:
+
+- **Adatvédelem.** A Google Fonts betöltése minden látogató IP-címét elküldené
+  a Google-nak. Egy adatkezelési tájékoztatóval rendelkező oldalnál ez
+  felesleges kockázat.
+- **Sebesség.** Nincs külső kapcsolatfelvétel, a betű az oldallal együtt érkezik.
+
+Ezért a `.htaccess` Content-Security-Policy sora szigorú maradhatott: minden
+forrás saját tárhelyről jön, nincs külső kivétel.
+
+Négy vastagság van feltöltve (300, 400, 600, 700), mindkét karakterkészlettel
+(latin + latin-ext – a magyar `ő` és `ű` az utóbbiban van). Összesen ~80 KB.
+Ha új betűvastagságot kezdesz használni a CSS-ben, a hozzá tartozó fájlt is
+fel kell venni, különben a böngésző a meglévőt fogja elnagyolni.
 
 ### Három szándékos eltérés a design systemtől
 
@@ -251,6 +261,12 @@ esetben a design system eredeti értéke nem érte el a WCAG 2.1 AA szintet:
 Egy negyedik, kisebb kiigazítás: a hibaüzenet **szövege** a mélyebb piros
 (`red-700`), mert a márkapiros a saját halvány hátterén csak 3,89:1. A keret és
 a bal oldali jelzősáv marad márkapiros.
+
+### Megszólítás
+
+A Pepper House arculata a **formális, „Ön" megszólítást** írja elő, ezért az
+oldal, a visszaigazoló levél és a heti étlap sablonja is magázó. Ha új szöveget
+írsz bárhova, ezt érdemes tartani.
 
 **A sötét témát a design system nem definiálja.** A márkához hozzátartozik a
 fekete szekció, ebből vezettük le. A márkapiros feketén túl sötét lenne, ezért

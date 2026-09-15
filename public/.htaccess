@@ -9,10 +9,8 @@ RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-Frame-Options "DENY"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
-    # A style-src/font-src a Jost betukeszlet miatt engedi a Google Fonts-ot.
-    # Ha kesobb sajat tarhelyre koltoztetitek a betut (lasd README), ezt a ket
-    # kivetelt ki lehet venni.
-    Header always set Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'"
+    # Minden forras sajat tarhelyrol - a betukeszlet is. Nincs kulso kivetel.
+    Header always set Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self'; font-src 'self'; script-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'"
     Header always set Strict-Transport-Security "max-age=31536000"
 </IfModule>
 
@@ -30,6 +28,8 @@ Options -Indexes
     ExpiresByType text/css "access plus 1 week"
     ExpiresByType image/svg+xml "access plus 1 month"
     ExpiresByType image/png "access plus 1 month"
+    # A betufajlok nevei verziozottak, igy hosszan gyorsitotarazhatok.
+    ExpiresByType font/woff2 "access plus 1 year"
 </IfModule>
 
 ErrorDocument 404 /index.php
