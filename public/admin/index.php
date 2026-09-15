@@ -212,7 +212,7 @@ render_header('Feliratkozók', true, true);
                 <?php if ($page > 1): ?>
                     <a class="btn btn--secondary btn--small btn--inline" href="/admin/?oldal=<?= $page - 1 ?>">Előző</a>
                 <?php endif; ?>
-                <span class="btn btn--small btn--inline"><?= $page ?> / <?= $totalPages ?></span>
+                <span class="pagination__state"><?= $page ?> / <?= $totalPages ?></span>
                 <?php if ($page < $totalPages): ?>
                     <a class="btn btn--secondary btn--small btn--inline" href="/admin/?oldal=<?= $page + 1 ?>">Következő</a>
                 <?php endif; ?>

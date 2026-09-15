@@ -1,129 +1,190 @@
 /* =============================================================
-   DESIGN TOKENEK
+   PEPPER HOUSE - DESIGN TOKENEK
    -------------------------------------------------------------
-   Ez az egyetlen hely, ahol a vizualis dontesek elnek.
-   Ha megerkezik a vegleges design system, CSAK az alabbi
-   :root blokk ertekeit kell atirni - a tobbi kod valtozatlan marad.
+   Forras: Pepper House Design System (tokens/colors.css,
+   typography.css, spacing.css, effects.css).
+   A DS sajat valtozoneveit megtartottuk (--ph-*), hogy egy kesobbi
+   frissitest egy az egyben at lehessen masolni. Alattuk vannak az
+   oldal sajat (szerep szerinti) tokenjei, amiket a komponensek
+   hasznalnak.
 
-   A kontrasztarányok WCAG 2.1 AA szerint ellenorizve:
-   szoveg >= 4.5:1, kezelofelulet-elemek (mezokeret, fokusz) >= 3:1.
-   Ha atszinezed, ezt erdemes ujra megnezni.
+   HAROM SZANDEKOS ELTERES a DS-tol, kontraszt miatt - reszletek
+   a README "Design testreszabasa" fejezeteben:
+     1. mezokeret: gray-300 helyett #949494 (1.62:1 -> 3.03:1)
+     2. halvany szoveg: gray-500 helyett gray-600 (4.29:1 -> 6.48:1)
+     3. siker zold: #2F8F53 helyett #277A46 (4.06:1 -> 5.31:1)
    ============================================================= */
 :root {
-  /* --- Semleges skala (meleg szurkek) --- */
-  --color-bg:            #faf9f6;  /* oldal hattere */
-  --color-surface:       #ffffff;  /* kartyak, mezok */
-  --color-surface-muted: #f3f1ec;  /* kiemelt savok, tablazat fejlec */
-  --color-border:        #e5e1d8;  /* dekorativ valasztovonalak */
-  --color-border-strong: #d3cec2;  /* hangsulyosabb elvalasztas */
+  /* ===== A design system eredeti tokenjei ===== */
+  --ph-red:      #e52721;   /* markapiros - a logo ecsetvonasabol */
+  --ph-red-600:  #c81e19;   /* hover / lenyomott */
+  --ph-red-700:  #a81713;   /* melyebb */
+  --ph-red-050:  #fceae9;   /* piros arnyalatu felulet */
+  --ph-black:    #141414;
+  --ph-ink:      #000000;
+  --ph-white:    #ffffff;
 
-  /* Kezelofelulet-elemek kerete. Szandekosan sotetebb a dekorativ
-     keretnel: a beviteli mezo hatarat latni kell (3:1 a kovetelmeny). */
-  --color-control:       #9c9487;
-  --color-control-hover: #7d766b;
+  --ph-gray-900: #1b1b1b;
+  --ph-gray-800: #2e2e2e;
+  --ph-gray-700: #454545;
+  --ph-gray-600: #5e5e5e;
+  --ph-gray-500: #7a7a7a;
+  --ph-gray-400: #a0a0a0;
+  --ph-gray-300: #cbcbcb;
+  --ph-gray-200: #e4e4e4;
+  --ph-gray-100: #f1f0ee;
+  --ph-gray-050: #f8f7f5;   /* meleg tortfeher oldalszin */
 
-  --color-text:       #1a1815;
-  --color-text-muted: #67625a;
+  --ph-warning: #e0a106;
+  --ph-info:    #2b6cb0;
 
-  /* --- Akcentus (zold) --- */
-  --color-accent:        #2e6b4f;
-  --color-accent-hover:  #245840;
-  --color-accent-active: #1d4835;
-  --color-accent-soft:   #e7f0ea;  /* halvany hatter siker-uzenethez */
-  --color-accent-line:   #bcd6c7;  /* halvany keret ugyanahhoz */
-  --color-on-accent:     #ffffff;  /* szoveg az akcentus felett */
+  /* ===== Szerep szerinti tokenek (ezeket hasznaljak a komponensek) ===== */
+  --color-bg:            var(--ph-gray-050);
+  --color-surface:       var(--ph-white);
+  --color-surface-muted: var(--ph-gray-100);
+  --color-surface-dark:  var(--ph-black);
+  --color-border:        var(--ph-gray-200);  /* dekorativ valasztovonal */
+  --color-border-strong: var(--ph-gray-300);
 
-  /* --- Allapotok --- */
-  --color-danger:      #a3312a;
-  --color-danger-soft: #fcebe9;
-  --color-danger-line: #f2cdc8;
-  --color-success:     var(--color-accent);
-  --color-focus:       var(--color-accent);
+  /* Kezelofelulet-elemek kerete. A DS gray-300-at ir, az viszont
+     1.62:1 - a mezo hatara nem lathato. A legvilagosabb szurke,
+     ami eleri a 3:1-et: #949494. */
+  --color-control:       #949494;
+  --color-control-hover: var(--ph-gray-600);
+  --color-control-focus: var(--ph-black);     /* a DS szerint fokuszban fekete */
 
-  /* --- Tipografia ---
-     Rendszerbetuk: gyorsan jelennek meg, nem kell kulso betukeszletet
-     tolteni (amit a .htaccess biztonsagi szabalya amugy sem engedne),
-     es minden magyar ekezetet ismernek. */
-  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-               "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --color-text:       var(--ph-ink);
+  --color-text-body:  var(--ph-gray-800);
+  --color-text-muted: var(--ph-gray-600);     /* DS: gray-500, az 4.29:1 */
 
-  /* Meretskala: 1rem alapon, kb. 1.2-es lepcsokkel. */
-  --text-xs:   0.8125rem;  /* 13px - apro feliratok */
-  --text-sm:   0.9375rem;  /* 15px - masodlagos szoveg */
-  --text-base: 1rem;       /* 16px - torzsszoveg es MINDEN beviteli mezo
-                              (kisebbnel az iOS ranagyit a mezore) */
-  --text-lg:   1.125rem;   /* 18px */
-  --text-xl:   1.375rem;   /* 22px */
-  --text-2xl:  1.75rem;    /* 28px - oldalcim */
+  --color-accent:        var(--ph-red);
+  --color-accent-hover:  var(--ph-red-600);
+  --color-accent-active: var(--ph-red-700);
+  --color-accent-soft:   var(--ph-red-050);
+  --color-accent-line:   #f3c8c6;
+  --color-on-accent:     var(--ph-white);
 
-  --leading-tight:  1.2;
-  --leading-snug:   1.4;
-  --leading-normal: 1.6;
+  --color-danger:      var(--ph-red);         /* a DS-ben a hiba = markapiros */
+  --color-danger-soft: var(--ph-red-050);
+  --color-danger-line: #f3c8c6;
+  /* A markapiros a sajat halvany hatteren csak 3.89:1, ezert a hibauzenet
+     SZOVEGE a melyebb piros. A keret es a jelzosav marad markapiros. */
+  --color-danger-text: var(--ph-red-700);
+  --color-success:      #277a46;              /* DS: #2F8F53, az 4.06:1 */
+  --color-success-soft: #e8f3ec;
+  --color-success-line: #bfdfcb;
+  --color-focus:       var(--ph-red);         /* a DS szerint piros fokuszgyuru */
 
-  --weight-regular: 400;
-  --weight-medium:  500;
+  /* ===== Tipografia ===== */
+  --font-sans:    'Jost', 'Futura', 'Century Gothic', -apple-system,
+                  BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: var(--font-sans);
+  --font-mono:    ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --weight-light:    300;
+  --weight-regular:  400;
+  --weight-medium:   500;
   --weight-semibold: 600;
-  --weight-bold:    700;
+  --weight-bold:     700;
 
-  --tracking-tight: -0.015em;
-  --tracking-wide:   0.07em;
+  --text-xs:      0.75rem;    /* 12 */
+  --text-eyebrow: 0.8125rem;  /* 13 */
+  --text-sm:      0.875rem;   /* 14 */
+  --text-base:    1rem;       /* 16 - torzsszoveg es MINDEN beviteli mezo
+                                 (kisebbnel az iOS ranagyit a mezore) */
+  --text-lead:    1.25rem;    /* 20 */
+  --text-h4:      1.25rem;    /* 20 */
+  --text-h3:      1.625rem;   /* 26 */
+  --text-h2:      2.25rem;    /* 36 */
 
-  /* --- Terkozok (4px alapraszter) --- */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.5rem;
-  --space-6: 2rem;
-  --space-7: 3rem;
+  --leading-tight:   1.08;
+  --leading-heading: 1.18;
+  --leading-snug:    1.4;
+  --leading-body:    1.65;
 
-  /* --- Formak --- */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
+  --tracking-tight:   -0.01em;
+  --tracking-wide:     0.04em;
+  --tracking-eyebrow:  0.22em;
+  --tracking-button:   0.12em;
+
+  /* ===== Terkozok (4px alap) ===== */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* ===== Formak - a marka "crisp/editorial", tehat kis lekerekites ===== */
+  --radius-none: 0;
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   14px;
   --radius-pill: 999px;
 
-  /* Retegzett arnyek: egy szoros kontur + egy lagy melyseg. */
-  --shadow-sm: 0 1px 2px rgba(26, 24, 21, 0.06);
-  --shadow-card: 0 1px 2px rgba(26, 24, 21, 0.05),
-                 0 10px 28px -12px rgba(26, 24, 21, 0.14);
+  /* ===== Arnyekok ===== */
+  --shadow-xs: 0 1px 2px rgba(20, 20, 20, 0.06);
+  --shadow-sm: 0 2px 8px rgba(20, 20, 20, 0.08);
+  --shadow-md: 0 8px 24px rgba(20, 20, 20, 0.10);
+  --shadow-lg: 0 18px 48px rgba(20, 20, 20, 0.14);
 
-  /* --- Egyeb --- */
-  --container-width: 28rem;
-  --container-wide: 64rem;
+  /* ===== Mozgas ===== */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out:      cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 0.14s;
+  --dur-base: 0.24s;
+
+  /* ===== Egyeb ===== */
+  --container-narrow: 34rem;
+  --container-wide:   1200px;
   --tap-target: 48px;
-  --transition: 140ms cubic-bezier(0.2, 0, 0.2, 1);
 }
 
+/* -------------------------------------------------------------
+   Sotet tema.
+   A design system nem definial sotet temat, de a markahoz hozzatartozik
+   a fekete szekcio ("sections alternate white / warm off-white / black"),
+   ezert abbol vezettuk le. A piros sotet hatteren tul alacsony
+   kontrasztot adna, ezert ott egy vilagosabb arnyalat all helyette.
+   ------------------------------------------------------------- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-bg:            #131519;
-    --color-surface:       #1c1f24;
-    --color-surface-muted: #242830;
-    --color-border:        #30353d;
-    --color-border-strong: #3d434d;
+    --color-bg:            #0f0f0f;
+    --color-surface:       var(--ph-black);
+    --color-surface-muted: #1f1f1f;
+    --color-border:        #2e2e2e;
+    --color-border-strong: #3d3d3d;
 
-    --color-control:       #646d7b;
-    --color-control-hover: #7c8695;
+    --color-control:       #8a8a8a;
+    --color-control-hover: #adadad;
+    --color-control-focus: var(--ph-white);
 
-    --color-text:       #f1f0ed;
-    --color-text-muted: #a2a7b0;
+    --color-text:       #f5f4f2;
+    --color-text-body:  #e2e0dd;
+    --color-text-muted: #a6a6a6;
 
-    --color-accent:        #63bc8e;
-    --color-accent-hover:  #7acb9f;
-    --color-accent-active: #8fd6af;
-    --color-accent-soft:   #1c3629;
-    --color-accent-line:   #2c5240;
-    --color-on-accent:     #0d1f16;
+    --color-accent:        #ff6b63;   /* vilagosabb piros: olvashato feketen */
+    --color-accent-hover:  #ff8880;
+    --color-accent-active: #ffa19a;
+    --color-accent-soft:   #3a1614;
+    --color-accent-line:   #5c221f;
+    --color-on-accent:     #2b0a08;
 
-    --color-danger:      #f0908a;
-    --color-danger-soft: #3a2320;
-    --color-danger-line: #573431;
+    --color-danger:      #ff6b63;
+    --color-danger-soft: #3a1614;
+    --color-danger-line: #5c221f;
+    --color-danger-text: #ff8880;
+    --color-success:      #5fc184;
+    --color-success-soft: #14301f;
+    --color-success-line: #235536;
+    --color-focus:       #ff6b63;
 
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35),
-                   0 10px 28px -12px rgba(0, 0, 0, 0.6);
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.55);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.7);
   }
 }
 
@@ -136,33 +197,27 @@ body {
   margin: 0;
   padding: 0;
   background: var(--color-bg);
-  color: var(--color-text);
+  color: var(--color-text-body);
   font-family: var(--font-sans);
   font-size: var(--text-base);
-  line-height: var(--leading-normal);
+  font-weight: var(--weight-light);
+  line-height: var(--leading-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
 }
 
-::selection {
-  background: var(--color-accent-soft);
-  color: var(--color-text);
-}
+::selection { background: var(--color-accent); color: var(--color-on-accent); }
 
 img { max-width: 100%; display: block; }
 
-a { color: var(--color-accent); }
+a { color: var(--color-accent); text-underline-offset: 4px; }
 a:hover { color: var(--color-accent-hover); }
 
 :focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
-  border-radius: var(--radius-sm);
 }
 
-/* A mezoknel a sajat fokuszgyurut hasznaljuk (lasd .input:focus),
-   igy nem kerul ket gyuru egymasra. */
 .input:focus-visible { outline: none; }
 
 /* ============================= LAYOUT ============================= */
@@ -178,14 +233,13 @@ a:hover { color: var(--color-accent-hover); }
 .page__main {
   flex: 1;
   width: 100%;
-  max-width: var(--container-width);
+  max-width: var(--container-narrow);
   margin-inline: auto;
   padding-block: var(--space-6) var(--space-5);
 
-  /* Rovid oldal (urlap, visszajelzes) fuggolegesen kozepre kerul nagy
-     kepernyon. A "safe" kulcsszo miatt hosszu tartalomnal nem vagja le a
-     tetejet; ahol a bongeszo nem ismeri, ott az egesz szabaly kimarad,
-     es marad a felso igazitas. */
+  /* Rovid oldal fuggolegesen kozepre kerul nagy kepernyon. A "safe"
+     kulcsszo miatt hosszu tartalomnal nem vagja le a tetejet; ahol a
+     bongeszo nem ismeri, ott a szabaly kimarad es marad a felso igazitas. */
   display: flex;
   flex-direction: column;
   justify-content: safe center;
@@ -195,30 +249,33 @@ a:hover { color: var(--color-accent-hover); }
 
 .page__footer {
   width: 100%;
-  max-width: var(--container-width);
+  max-width: var(--container-wide);
   margin-inline: auto;
   padding-block: var(--space-5);
+  border-top: 1px solid var(--color-border);
   color: var(--color-text-muted);
   font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
   text-align: center;
 }
 
 .page__footer a { color: var(--color-text-muted); }
+.page__footer a:hover { color: var(--color-accent); }
 
-/* Szelesebb kepernyon kicsit levegosebb, de nem nyulik szet. */
 @media (min-width: 40rem) {
-  .page__main { padding-block: var(--space-7) var(--space-6); }
+  .page__main { padding-block: var(--space-8) var(--space-6); }
 }
 
+/* Editorial kartya: eles sarkok, lagy alacsony arnyek. */
 .card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
   padding: var(--space-5);
 }
 
-.card + .card { margin-top: var(--space-4); }
+.card + .card { margin-top: var(--space-5); }
 
 @media (min-width: 40rem) {
   .card { padding: var(--space-6); }
@@ -226,9 +283,11 @@ a:hover { color: var(--color-accent-hover); }
 
 /* ========================== TIPOGRAFIA ========================== */
 .title {
-  margin: 0 0 var(--space-3);
-  font-size: var(--text-2xl);
-  line-height: var(--leading-tight);
+  margin: 0 0 var(--space-4);
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: var(--text-h2);
+  line-height: var(--leading-heading);
   font-weight: var(--weight-bold);
   letter-spacing: var(--tracking-tight);
   text-wrap: balance;
@@ -238,30 +297,56 @@ a:hover { color: var(--color-accent-hover); }
   margin: 0 0 var(--space-5);
   color: var(--color-text-muted);
   font-size: var(--text-base);
+  line-height: var(--leading-body);
   text-wrap: pretty;
 }
 
+/* Eyebrow: verzal, tag betukoz, elotte rovid piros vonal - a DS jegye. */
 .eyebrow {
-  margin: 0 0 var(--space-2);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-3);
   color: var(--color-accent);
-  font-size: var(--text-xs);
+  font-size: var(--text-eyebrow);
   font-weight: var(--weight-semibold);
+  line-height: 1;
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: var(--tracking-eyebrow);
 }
 
-.prose h2 { font-size: var(--text-lg); margin: var(--space-5) 0 var(--space-2); }
+.eyebrow::before {
+  content: "";
+  flex: none;
+  width: 28px;
+  height: 2px;
+  background: var(--color-accent);
+}
+
+.prose h2 {
+  margin: var(--space-6) 0 var(--space-3);
+  color: var(--color-text);
+  font-size: var(--text-h4);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-heading);
+}
 .prose p, .prose li { font-size: var(--text-sm); color: var(--color-text-muted); }
 .prose ul { padding-left: var(--space-5); }
+.prose li { margin-bottom: var(--space-2); }
 
 /* ============================ URLAP ============================ */
-.field { margin-bottom: var(--space-4); }
+.field { margin-bottom: var(--space-5); }
 
+/* A DS-ben a mezocimke verzal, tag betukozzel. */
 .label {
   display: block;
   margin-bottom: var(--space-2);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
+  color: var(--color-text);
+  font-size: var(--text-eyebrow);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .input {
@@ -269,28 +354,30 @@ a:hover { color: var(--color-accent-hover); }
   min-height: var(--tap-target);
   padding: var(--space-3) var(--space-4);
   background: var(--color-surface);
-  /* A keret szandekosan jol lathato: a mezo hatarat latni kell. */
-  border: 1px solid var(--color-control);
-  border-radius: var(--radius-md);
-  color: var(--color-text);
-  /* 16px-nel kisebb betumeret eseten az iOS ranagyit a mezore - ezert 1rem a minimum. */
+  /* 1.5px keret a DS szerint. A szin szandekosan jol lathato:
+     a mezo hatarat latni kell. */
+  border: 1.5px solid var(--color-control);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-body);
+  /* 16px-nel kisebb betumeret eseten az iOS ranagyit a mezore. */
   font-size: var(--text-base);
   font-family: inherit;
-  transition: border-color var(--transition), box-shadow var(--transition);
+  font-weight: var(--weight-regular);
+  transition: border-color var(--dur-fast) var(--ease-standard),
+              box-shadow var(--dur-fast) var(--ease-standard);
 }
 
 .input::placeholder { color: var(--color-text-muted); }
-
 .input:hover { border-color: var(--color-control-hover); }
 
+/* A DS szerint fokuszban fekete keret (sotet temaban feher). */
 .input:focus {
   outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px var(--color-accent-soft);
+  border-color: var(--color-control-focus);
 }
 
-.input[aria-invalid="true"] { border-color: var(--color-danger); }
-.input[aria-invalid="true"]:focus { box-shadow: 0 0 0 3px var(--color-danger-soft); }
+.input[aria-invalid="true"] { border-color: var(--color-accent); }
+.input[aria-invalid="true"]:focus { box-shadow: 0 0 0 3px var(--color-accent-soft); }
 .input[readonly] { background: var(--color-surface-muted); }
 
 /* Honeypot mezo: valodi felhasznalo soha nem latja. */
@@ -314,24 +401,25 @@ a:hover { color: var(--color-accent-hover); }
   line-height: var(--leading-snug);
   color: var(--color-text-muted);
   cursor: pointer;
-  transition: background var(--transition);
+  transition: background var(--dur-fast) var(--ease-standard);
 }
 
 .checkbox:hover { background: var(--color-surface-muted); }
 
 .checkbox input {
   flex: none;
-  width: 1.375rem;
-  height: 1.375rem;
+  width: 20px;
+  height: 20px;
   margin: 0;
   accent-color: var(--color-accent);
   cursor: pointer;
 }
 
 /* A szoveg elso sora essen egybe a negyzet kozepevel. */
-.checkbox > span { padding-top: 0.0625rem; }
+.checkbox > span { padding-top: 1px; }
 
 /* ============================ GOMBOK ============================ */
+/* A DS gombja: pill forma, verzal felirat, tag betukoz, 1.5px keret. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -339,48 +427,64 @@ a:hover { color: var(--color-accent-hover); }
   gap: var(--space-2);
   width: 100%;
   min-height: var(--tap-target);
-  padding: var(--space-3) var(--space-5);
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-6);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-pill);
   font-family: inherit;
-  font-size: var(--text-base);
-  font-weight: var(--weight-medium);
-  line-height: 1;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-button);
   text-decoration: none;
   cursor: pointer;
-  transition: background var(--transition), color var(--transition), border-color var(--transition);
+  transition: background var(--dur-fast) var(--ease-standard),
+              color var(--dur-fast) var(--ease-standard),
+              border-color var(--dur-fast) var(--ease-standard);
 }
-
-.btn:active { transform: translateY(1px); }
 
 .btn--primary {
   background: var(--color-accent);
+  border-color: var(--color-accent);
   color: var(--color-on-accent);
-  box-shadow: var(--shadow-sm);
 }
-.btn--primary:hover { background: var(--color-accent-hover); color: var(--color-on-accent); }
-.btn--primary:active { background: var(--color-accent-active); }
+.btn--primary:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+  color: var(--color-on-accent);
+}
+.btn--primary:active {
+  background: var(--color-accent-active);
+  border-color: var(--color-accent-active);
+}
 
+/* Outline: atlatszo, fekete keret; hoverre kitolt. */
 .btn--secondary {
-  background: var(--color-surface);
-  border-color: var(--color-control);
+  background: transparent;
+  border-color: var(--color-text);
   color: var(--color-text);
 }
 .btn--secondary:hover {
-  background: var(--color-surface-muted);
-  border-color: var(--color-control-hover);
-  color: var(--color-text);
+  background: var(--color-text);
+  color: var(--color-surface);
 }
 
 .btn--danger {
   background: transparent;
-  border-color: var(--color-danger-line);
-  color: var(--color-danger);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
-.btn--danger:hover { background: var(--color-danger-soft); }
+.btn--danger:hover {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
 
 .btn--inline { width: auto; }
-.btn--small { min-height: 36px; padding: var(--space-2) var(--space-3); font-size: var(--text-sm); }
+.btn--small {
+  min-height: 38px;
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-xs);
+}
 
 /* =========================== UZENETEK =========================== */
 .alert {
@@ -388,7 +492,8 @@ a:hover { color: var(--color-accent-hover); }
   gap: var(--space-3);
   padding: var(--space-4);
   border: 1px solid transparent;
-  border-radius: var(--radius-md);
+  border-left-width: 3px;
+  border-radius: var(--radius-sm);
   font-size: var(--text-sm);
   line-height: var(--leading-snug);
   margin-bottom: var(--space-5);
@@ -397,17 +502,19 @@ a:hover { color: var(--color-accent-hover); }
 .alert--error {
   background: var(--color-danger-soft);
   border-color: var(--color-danger-line);
-  color: var(--color-danger);
+  border-left-color: var(--color-danger);
+  color: var(--color-danger-text);
 }
 .alert--success {
-  background: var(--color-accent-soft);
-  border-color: var(--color-accent-line);
+  background: var(--color-success-soft);
+  border-color: var(--color-success-line);
+  border-left-color: var(--color-success);
   color: var(--color-success);
 }
 
 .alert__icon {
   flex: none;
-  font-size: var(--text-lg);
+  font-size: var(--text-h4);
   line-height: 1.2;
   font-weight: var(--weight-bold);
 }
@@ -417,19 +524,18 @@ a:hover { color: var(--color-accent-hover); }
 .result__icon {
   width: 64px;
   height: 64px;
-  margin: 0 auto var(--space-4);
+  margin: 0 auto var(--space-5);
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: var(--color-accent-soft);
-  border: 1px solid var(--color-accent-line);
+  background: var(--color-success-soft);
+  border: 1.5px solid var(--color-success-line);
   color: var(--color-success);
-  font-size: var(--text-2xl);
+  font-size: var(--text-h3);
   line-height: 1;
 }
 
 /* ============================= ADMIN ============================= */
-
 .stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
@@ -440,12 +546,14 @@ a:hover { color: var(--color-accent-hover); }
 .stat {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-top: 3px solid var(--color-accent);
+  border-radius: var(--radius-sm);
   padding: var(--space-4);
 }
 
 .stat__value {
-  font-size: var(--text-2xl);
+  color: var(--color-text);
+  font-size: var(--text-h2);
   font-weight: var(--weight-bold);
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-tight);
@@ -453,12 +561,12 @@ a:hover { color: var(--color-accent-hover); }
 }
 
 .stat__label {
-  margin-top: var(--space-1);
+  margin-top: var(--space-2);
   font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-semibold);
   color: var(--color-text-muted);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: var(--tracking-eyebrow);
 }
 
 .toolbar {
@@ -475,7 +583,7 @@ a:hover { color: var(--color-accent-hover); }
   overflow-x: auto;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   -webkit-overflow-scrolling: touch;
 }
 
@@ -502,23 +610,24 @@ a:hover { color: var(--color-accent-hover); }
 }
 
 .table tbody tr:hover { background: var(--color-surface-muted); }
-.table td { font-variant-numeric: tabular-nums; }
-
 .table tr:last-child td { border-bottom: none; }
+.table td { font-variant-numeric: tabular-nums; }
 
 .badge {
   display: inline-block;
-  padding: 2px var(--space-2);
+  padding: 3px var(--space-3);
   border: 1px solid transparent;
   border-radius: var(--radius-pill);
   font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
   white-space: nowrap;
 }
 
 .badge--active {
-  background: var(--color-accent-soft);
-  border-color: var(--color-accent-line);
+  background: var(--color-success-soft);
+  border-color: var(--color-success-line);
   color: var(--color-success);
 }
 .badge--inactive {
@@ -530,12 +639,24 @@ a:hover { color: var(--color-accent-hover); }
 .pagination {
   display: flex;
   gap: var(--space-2);
+  align-items: center;
   justify-content: center;
   margin-top: var(--space-5);
 }
 
+.pagination .btn { width: auto; }
+
+.pagination__state {
+  padding: 0 var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .empty {
-  padding: var(--space-6);
+  padding: var(--space-7);
   text-align: center;
   color: var(--color-text-muted);
   font-size: var(--text-sm);

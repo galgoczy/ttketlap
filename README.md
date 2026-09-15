@@ -209,28 +209,59 @@ Lásd: [`docs/qr-kod.md`](docs/qr-kod.md).
 
 ---
 
-## Design testreszabása
+## Design: Pepper House design system
 
-Minden szín, betűméret, térköz és lekerekítés a
-[`public/assets/css/app.css`](public/assets/css/app.css) tetején lévő `:root` blokkban van.
-A design system megérkezésekor **csak ezeket az értékeket kell átírni** –
-a HTML és a PHP változatlan marad.
+Az oldal a **Pepper House design system** alapján készült: márkapiros (`#E52721`)
+akcentus, fekete-fehér alap, meleg törtfehér oldalháttér, éles (4–8px) sarkok,
+pill formájú verzál gombok, verzál mezőcímkék, és a jellegzetes „eyebrow"
+felirat rövid piros vonallal.
+
+A design system saját változónevei (`--ph-*`) megmaradtak a
+[`public/assets/css/app.css`](public/assets/css/app.css) tetején, alattuk pedig
+a szerep szerinti tokenek (`--color-*`), amiket a komponensek használnak.
+Ha frissül a design system, a `--ph-*` blokkot egy az egyben ki lehet cserélni.
+
+### Betűtípus
+
+A rendszer a **Jost** betűtípust használja a Google Fontsról. Ez a design system
+saját döntése: a márka betűje egy Futura-családbeli geometrikus talpatlan, a
+licencelt változat nem állt rendelkezésre, és a Jost ehhez a legközelebbi
+szabadon használható megfelelő. **Ha megvan a licencelt márkabetű, cserélhető** –
+egy helyen, a `--font-sans` tokenben.
+
+> **Érdemes megfontolni: a betű saját tárhelyre költöztetése.**
+> A Google Fonts betöltése minden látogató IP-címét elküldi a Google-nak.
+> Európában ez adatvédelmi szempontból vitatott, és egy adatkezelési
+> tájékoztatóval rendelkező oldalnál kellemetlen kérdés lehet. A `.woff2`
+> fájlokat letöltve és a tárhelyre feltöltve a probléma megszűnik, az oldal
+> pedig gyorsabb is lesz. Ilyenkor a `.htaccess`-ben a két Google Fonts
+> kivétel is kivehető a Content-Security-Policy sorból.
+
+### Három szándékos eltérés a design systemtől
+
+Ezek nem hibák, hanem kontrasztkövetelmények miatti korrekciók. Mindhárom
+esetben a design system eredeti értéke nem érte el a WCAG 2.1 AA szintet:
+
+| Mire | Design system | Itt | Miért |
+|---|---|---|---|
+| Mezőkeret | `gray-300` `#CBCBCB` | `#949494` | 1,62:1 → 3,03:1 (a mező határát látni kell) |
+| Halvány szöveg | `gray-500` `#7A7A7A` | `gray-600` `#5E5E5E` | 4,29:1 → 6,48:1 |
+| Siker zöld | `#2F8F53` | `#277A46` | 4,06:1 → 4,66:1 |
+
+Egy negyedik, kisebb kiigazítás: a hibaüzenet **szövege** a mélyebb piros
+(`red-700`), mert a márkapiros a saját halvány hátterén csak 3,89:1. A keret és
+a bal oldali jelzősáv marad márkapiros.
+
+**A sötét témát a design system nem definiálja.** A márkához hozzátartozik a
+fekete szekció, ebből vezettük le. A márkapiros feketén túl sötét lenne, ezért
+ott egy világosabb árnyalat áll helyette.
 
 Az oldal mobile first: egy oszlop, 48px-es érintési felületek, a betűméret sehol
-nem kisebb 16px-nél (különben az iPhone ránagyít a mezőkre). Sötét témát is támogat.
+nem kisebb 16px-nél (különben az iPhone ránagyít a mezőkre).
 
-**Ha átszínezed, két dologra figyelj:**
-
-- A `--color-control` (a beviteli mezők kerete) **nem** dekoráció: a mező
-  határát látni kell, ezért legalább 3:1 kontraszt kell a kártya hátteréhez
-  képest. Ez külön token, szándékosan sötétebb a dekoratív `--color-border`-nél.
-- A szövegszínek és a hátterek között legalább 4,5:1 kontraszt kell.
-
-A jelenlegi paletta minden párja megfelel a WCAG 2.1 AA szintnek, világos és
-sötét témában egyaránt. Ellenőrizni bármelyik ingyenes kontraszt-kalkulátorral
-lehet (pl. webaim.org/resources/contrastchecker).
-
----
+**Ha átszínezed:** a `--color-control` (mezőkeret) nem dekoráció, legalább 3:1
+kontraszt kell hozzá; a szövegszíneknél 4,5:1. Ellenőrizni bármelyik ingyenes
+kontraszt-kalkulátorral lehet (pl. webaim.org/resources/contrastchecker).
 
 ## Ami be van építve a biztonság érdekében
 
