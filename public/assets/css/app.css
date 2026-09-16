@@ -832,3 +832,27 @@ textarea.input {
   border-color: var(--color-danger-line);
   color: var(--color-danger-text);
 }
+
+/* Fejlec a logoval. Minden oldal tetejen ugyanaz. */
+.page__header {
+  width: 100%;
+  max-width: var(--container-wide);
+  margin-inline: auto;
+  padding-block: var(--space-5) 0;
+  text-align: center;
+}
+
+.page__logo-link {
+  display: inline-block;
+  line-height: 0;
+}
+
+/* A logo 560x104 pixeles; a szelesseget adjuk meg, a magassag kovetkezik. */
+.page__logo {
+  width: 150px;
+  height: auto;
+}
+
+@media (min-width: 40rem) {
+  .page__logo { width: 180px; }
+}

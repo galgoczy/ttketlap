@@ -18,10 +18,20 @@ function render_header(string $title, bool $noindex = false, bool $wide = false)
      betujet eloretoltjuk, hogy ne legyen villanas az elso megjelenesnel. -->
 <link rel="preload" href="/assets/fonts/jost-latin-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/jost-latin-ext-400.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/css/app.css?v=3">
+<link rel="stylesheet" href="/assets/css/app.css?v=4">
 </head>
 <body>
 <div class="page">
+<header class="page__header">
+    <a class="page__logo-link" href="/">
+        <!-- Sotet temaban a vilagos valtozat olvashato, ezert cserel a picture. -->
+        <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="/assets/img/pepperhouse-logo-inverse.png">
+            <img class="page__logo" src="/assets/img/pepperhouse-logo.png"
+                 width="560" height="104" alt="<?= e(cfg('operator_name')) ?>">
+        </picture>
+    </a>
+</header>
 <main class="page__main<?= $wide ? ' page__main--wide' : '' ?>">
 <?php
 }
