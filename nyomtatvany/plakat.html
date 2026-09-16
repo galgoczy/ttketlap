@@ -122,8 +122,8 @@ body {
   color: var(--szurke);
 }
 
-/* A margin-top: auto itt és a láblécen is szerepel: a maradék helyet a
-   kettő egyenlően osztja el, így a QR a lap közepére kerül. */
+/* A cím alatti automatikus margó párja: a maradék helyet a kettő
+   egyenlően osztja el, így a QR a lap közepére kerül. */
 .qr-keret {
   padding: 6mm;
   background: #ffffff;
@@ -135,20 +135,11 @@ body {
 .qr { width: 84mm; height: 84mm; display: block; }
 
 .cim-szoveg {
-  margin: 7mm 0 0;
+  margin: 7mm 0 auto;
   font-size: 19pt;
   font-weight: 600;
   letter-spacing: 0.01em;
   word-break: keep-all;
-}
-
-.also {
-  margin-top: auto;
-  padding-top: 10mm;
-  width: 100%;
-  border-top: 0.3mm solid #dcdcdc;
-  font-size: 9.5pt;
-  color: var(--szurke);
 }
 </style>
 </head>
@@ -174,10 +165,6 @@ body {
     </div>
 
     <p class="cim-szoveg">ttketlap.pepperhouse.hu</p>
-
-    <p class="also">
-        PepperHouse Kft. &middot; Csak az email-címét kérjük, és bármikor leiratkozhat.
-    </p>
 
 </div>
 </body>
