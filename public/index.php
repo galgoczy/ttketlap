@@ -110,8 +110,8 @@ render_header('Feliratkozás a heti étlapra');
         <p class="eyebrow">Menza</p>
         <h1 class="title">Kérje a heti étlapot emailben</h1>
         <p class="subtitle">
-            Iratkozzon fel, és minden héten elküldjük a menza étlapját &ndash;
-            így előre tudja, mi lesz az ebéd.
+            Iratkozzon fel, és minden héten elküldjük étlapunkat! Így első kézből
+            értesülhet, milyen fogásokkal várjuk a következő héten!
         </p>
 
         <?php foreach ($errors as $error): ?>
