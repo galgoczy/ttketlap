@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<title>TTK Kantin – heti étlap plakát (A4)</title>
+<!--
+    A4 plakát a feliratkozáshoz. Nyomtatáshoz: Ctrl+P, A4, álló,
+    "Háttérgrafikák" bekapcsolva, margó "Nincs" (a margót ez a lap adja).
+    A kész PDF: plakat.pdf – azt érdemes a nyomdába vinni.
+
+    A Jost betűkészlet a public/assets/fonts mappából tölt be, ezért ezt a
+    fájlt a repóban a helyén kell hagyni, különben más betűvel jelenik meg.
+-->
+<style>
+/* A latin-ext szelet a magyar ő és ű miatt kell. */
+@font-face {
+  font-family: 'Jost'; font-style: normal; font-weight: 400;
+  src: url('../public/assets/fonts/jost-latin-ext-400.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+                 U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF,
+                 U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Jost'; font-style: normal; font-weight: 400;
+  src: url('../public/assets/fonts/jost-latin-400.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                 U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+                 U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Jost'; font-style: normal; font-weight: 600;
+  src: url('../public/assets/fonts/jost-latin-ext-600.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+                 U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF,
+                 U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Jost'; font-style: normal; font-weight: 600;
+  src: url('../public/assets/fonts/jost-latin-600.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                 U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+                 U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Jost'; font-style: normal; font-weight: 700;
+  src: url('../public/assets/fonts/jost-latin-ext-700.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+                 U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF,
+                 U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Jost'; font-style: normal; font-weight: 700;
+  src: url('../public/assets/fonts/jost-latin-700.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                 U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+                 U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  --piros: #e52721;
+  --fekete: #111111;
+  --szurke: #6b6b6b;
+}
+
+@page { size: A4 portrait; margin: 0; }
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; background: #ffffff; }
+
+body {
+  font-family: 'Jost', 'Futura', 'Century Gothic', Helvetica, Arial, sans-serif;
+  color: var(--fekete);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.lap {
+  width: 210mm;
+  height: 297mm;
+  margin: 0 auto;
+  padding: 20mm 18mm 16mm;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: #ffffff;
+}
+
+.logo { width: 68mm; height: auto; }
+
+.csik {
+  width: 22mm;
+  height: 1.6mm;
+  background: var(--piros);
+  margin: 9mm 0 6mm;
+}
+
+.felcim {
+  margin: 0;
+  font-size: 13pt;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--piros);
+}
+
+.cim {
+  margin: 6mm 0 0;
+  font-size: 30pt;
+  font-weight: 700;
+  line-height: 1.16;
+  letter-spacing: -0.01em;
+  max-width: 152mm;
+  text-wrap: balance;
+}
+
+.utasitas {
+  margin: auto 0 5mm;
+  font-size: 13pt;
+  font-weight: 400;
+  color: var(--szurke);
+}
+
+/* A margin-top: auto itt és a láblécen is szerepel: a maradék helyet a
+   kettő egyenlően osztja el, így a QR a lap közepére kerül. */
+.qr-keret {
+  padding: 6mm;
+  background: #ffffff;
+  border: 0.6mm solid var(--fekete);
+  border-radius: 3mm;
+  line-height: 0;
+}
+
+.qr { width: 84mm; height: 84mm; display: block; }
+
+.cim-szoveg {
+  margin: 7mm 0 0;
+  font-size: 19pt;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  word-break: keep-all;
+}
+
+.also {
+  margin-top: auto;
+  padding-top: 10mm;
+  width: 100%;
+  border-top: 0.3mm solid #dcdcdc;
+  font-size: 9.5pt;
+  color: var(--szurke);
+}
+</style>
+</head>
+<body>
+<div class="lap">
+
+    <img class="logo" src="../public/assets/img/pepperhouse-logo.png"
+         alt="Pepper House" width="560" height="104">
+
+    <div class="csik"></div>
+
+    <p class="felcim">TTK Kantin</p>
+
+    <h1 class="cim">
+        Iratkozzon fel heti étlapunkra és értesüljön első kézből jövő heti
+        remek fogásainkról!
+    </h1>
+
+    <p class="utasitas">Olvassa be a telefonja kamerájával</p>
+
+    <div class="qr-keret">
+        <img class="qr" src="qr.svg" alt="QR kód: ttketlap.pepperhouse.hu">
+    </div>
+
+    <p class="cim-szoveg">ttketlap.pepperhouse.hu</p>
+
+    <p class="also">
+        PepperHouse Kft. &middot; Csak az email-címét kérjük, és bármikor leiratkozhat.
+    </p>
+
+</div>
+</body>
+</html>
