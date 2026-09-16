@@ -7,8 +7,8 @@
 return [
     // --- Adatbazis (Hostinger hPanel -> Adatbazisok -> MySQL) ---
     'db_host' => 'localhost',
-    'db_name' => 'u123456789_menza',
-    'db_user' => 'u123456789_menza',
+    'db_name' => 'u123456789_kantin',
+    'db_user' => 'u123456789_kantin',
     'db_pass' => 'IDE_JON_AZ_ADATBAZIS_JELSZO',
 
     // --- Admin belepes ---
@@ -18,9 +18,9 @@ return [
     'admin_password_hash' => '$2y$12$CSERELD_LE_EZT_EGY_VALODI_BCRYPT_HASHRE',
 
     // --- Altalanos ---
-    'site_name'        => 'Menza heti etlap',
+    'site_name'        => 'TTK Kantin heti etlap',
     'site_url'         => 'https://pelda.hu',   // vegen NE legyen per jel
-    'contact_email'    => 'menza@pelda.hu',
+    'contact_email'    => 'kantin@pelda.hu',
     'operator_name'    => 'Uzemelteto Kft.',
     'operator_address' => '1111 Budapest, Pelda utca 1.',
 
@@ -43,8 +43,8 @@ return [
     'mail_transport' => 'graph',
 
     // A felado postafiok. Mindket utvonalnal ez a felado cim.
-    'mail_from'      => 'menza@pelda.hu',
-    'mail_from_name' => 'Menza heti etlap',
+    'mail_from'      => 'kantin@pelda.hu',
+    'mail_from_name' => 'TTK Kantin heti etlap',
 
     // --- 'graph' utvonal: az Entra ID app regisztracio adatai ---
     // Entra admin center -> App registrations -> az alkalmazasod:
@@ -61,7 +61,7 @@ return [
     'smtp_host'   => 'smtp.office365.com',
     'smtp_port'   => '587',
     'smtp_secure' => 'tls',
-    'smtp_user'   => 'menza@pelda.hu',
+    'smtp_user'   => 'kantin@pelda.hu',
     'smtp_pass'   => '',
 
     // Kuldjon-e visszaigazolo levelet feliratkozaskor? '1' = igen, '0' = nem.

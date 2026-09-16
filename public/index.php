@@ -99,7 +99,7 @@ render_header('Feliratkozás a heti étlapra');
         <div class="result__icon" aria-hidden="true">✓</div>
         <h1 class="title">Sikeres feliratkozás</h1>
         <p class="subtitle">
-            Mostantól elküldjük Önnek emailben a menza heti étlapját.
+            Mostantól elküldjük Önnek emailben az étterem heti étlapját.
             Leiratkozni bármikor tud a levelek alján található linkkel.
         </p>
     </div>
@@ -107,7 +107,7 @@ render_header('Feliratkozás a heti étlapra');
 <?php else: ?>
 
     <div class="card">
-        <p class="eyebrow">Menza</p>
+        <p class="eyebrow">TTK Kantin</p>
         <h1 class="title">Kérje a heti étlapot emailben</h1>
         <p class="subtitle">
             Iratkozzon fel, és minden héten elküldjük étlapunkat! Így első kézből

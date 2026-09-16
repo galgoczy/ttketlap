@@ -299,7 +299,7 @@ function send_welcome_email(string $email, string $unsubscribeToken): bool
     $html = email_keret(
         'Sikeres feliratkozás',
         $torzs,
-        'Mostantól minden héten megkapja a menza étlapját.',
+        'Mostantól minden héten elküldjük étlapunkat.',
         $unsubscribeUrl
     );
 

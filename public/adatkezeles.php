@@ -29,7 +29,7 @@ render_header('Adatkezelési tájékoztató');
 
     <h2>Miért kezeljük?</h2>
     <p>
-        Kizárólag azért, hogy elküldjük Önnek a menza heti étlapját.
+        Kizárólag azért, hogy elküldjük Önnek az étterem heti étlapját.
         Az adatkezelés jogalapja az Ön hozzájárulása (GDPR 6. cikk (1) a) pont).
         Az email-címét reklám céljára nem használjuk, és harmadik félnek nem adjuk át.
     </p>

@@ -1,4 +1,4 @@
-# Heti menza étlap – feliratkozási rendszer
+# TTK Kantin heti étlap – feliratkozási rendszer
 
 QR-kód → mobilbarát feliratkozó oldal → saját email-adatbázis → admin + CSV export → leiratkozás.
 
@@ -52,7 +52,7 @@ tools/             jelszó-hash generáló (csak helyben, nem kerül fel a tárh
 ### 1. Adatbázis létrehozása
 
 1. Lépj be a Hostinger **hPanel**-be → **Adatbázisok** → **MySQL adatbázisok**.
-2. Hozz létre egy új adatbázist (pl. `menza`) és egy felhasználót. **Mentsd el a jelszót.**
+2. Hozz létre egy új adatbázist (pl. `kantin`) és egy felhasználót. **Mentsd el a jelszót.**
 3. Kattints a **phpMyAdmin** gombra az adatbázis mellett.
 4. Válaszd az **SQL** fület, másold be a `sql/schema.sql` fájl teljes tartalmát, és futtasd le.
 
