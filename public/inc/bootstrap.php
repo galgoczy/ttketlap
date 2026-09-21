@@ -25,6 +25,14 @@ $config = require $configFile;
  */
 function hiba_oldal(): void
 {
+    // Parancssorban (idozitett futas) nincs ertelme HTML oldalt kiirni:
+    // az csak olvashatatlanna tenne a cron naplojat. A nem nulla kilepesi
+    // kod viszont fontos - abbol tudja a tarhely, hogy a futas elbukott.
+    if (PHP_SAPI === 'cli') {
+        fwrite(STDERR, "Technikai hiba történt. A részletek a hibanaplóban vannak.\n");
+        exit(1);
+    }
+
     if (!headers_sent()) {
         http_response_code(500);
         header('Content-Type: text/html; charset=utf-8');

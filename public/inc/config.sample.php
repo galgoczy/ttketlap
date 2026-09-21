@@ -66,4 +66,36 @@ return [
 
     // Kuldjon-e visszaigazolo levelet feliratkozaskor? '1' = igen, '0' = nem.
     'send_welcome_email' => '1',
+
+    // --- Etlap futar: a bekuldott PDF automatikus kikuldese ---
+    // Reszletes beallitasi utmutato: docs/etlap-kuldes.md
+    //
+    // Az a postafiok, ahova az uzletvezeto a napi etlapot kuldi.
+    // M365-ben erre MEGOSZTOTT POSTAFIOK (shared mailbox) valo: az
+    // ingyenes, nem fogyaszt licencet. Ha ures, a figyeles kikapcsol.
+    'etlap_mailbox' => '',
+
+    // Kik kuldhetnek be etlapot. Vesszovel elvalasztott cimek.
+    // Ami nem ezekrol a cimekrol erkezik, azt a rendszer figyelmen kivul
+    // hagyja - ez a fo vedelem az ellen, hogy idegen kuldessen ki barmit.
+    'etlap_bekuldok' => 'uzletvezeto@pelda.hu',
+
+    // Ennyi percig var a rendszer a kikuldes elott. Ez alatt a bekuldo a
+    // kapott elonezetben levo "Megsem" linkkel meg leallithatja.
+    // 0 = azonnali kikuldes (nem ajanlott).
+    'etlap_varakozas_perc' => '15',
+
+    // Egy futas legfeljebb ennyi masodpercig kuld leveleket, aztan a
+    // kovetkezo futas folytatja. Parancssori (cron) futasnal nyugodtan
+    // lehet hosszabb; webcimrol inditva maradjon a tarhely idokorlatja alatt.
+    'etlap_futasi_ido' => '240',
+
+    // Ennyi masodpercet var ket level kozott. Az Exchange Online percenkent
+    // korlatozott szamu levelet enged; ez tartja a rendszert a hatar alatt.
+    'etlap_kuldes_tempo' => '2.2',
+
+    // Csak akkor kell, ha a futart webcimmel inditod (cron_kulcs nelkul a
+    // futar.php webrol egyaltalan nem erheto el). Generalas:
+    //   openssl rand -hex 24
+    'cron_kulcs' => '',
 ];

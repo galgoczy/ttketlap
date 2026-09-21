@@ -97,6 +97,7 @@ render_header('Címlista', true, true);
 
     <div class="toolbar mt-6">
         <a class="btn btn--secondary btn--small" href="/admin/">Vissza a feliratkozókhoz</a>
+        <a class="btn btn--secondary btn--small" href="/admin/kuldesek.php">Étlap kiküldések</a>
         <a class="btn btn--secondary btn--small" href="/admin/export.php?tipus=aktiv">Teljes CSV letöltése</a>
     </div>
 </div>

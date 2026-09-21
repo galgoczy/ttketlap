@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/auth.php';
-require __DIR__ . '/../inc/mailer.php';
+require __DIR__ . '/../inc/etlap_futar.php';
 require_admin();
 
 /**
@@ -195,6 +195,79 @@ ellenoriz('Levélküldés beállítva', function () {
 ellenoriz('Visszaigazoló levél', fn() => cfg('send_welcome_email', '1') === '1'
     ? ['ok', 'bekapcsolva']
     : ['figyelem', 'kikapcsolva (send_welcome_email = 0)']);
+
+// ---------- Etlap futar ----------
+
+ellenoriz('`etlap_kuldes` tábla', function () {
+    $van = db()->query("SHOW TABLES LIKE 'etlap_kuldes'")->fetch();
+    return $van
+        ? ['ok', 'megvan']
+        : ['hiba', 'Nincs meg. Enélkül a beküldött étlapok nem mennek ki. '
+                 . 'Futtasd le a sql/etlap-kuldes.sql fájlt a phpMyAdminban.'];
+});
+
+ellenoriz('`rendszer_allapot` tábla', function () {
+    $van = db()->query("SHOW TABLES LIKE 'rendszer_allapot'")->fetch();
+    return $van
+        ? ['ok', 'megvan']
+        : ['hiba', 'Nincs meg. Futtasd le a sql/etlap-kuldes.sql fájlt a phpMyAdminban.'];
+});
+
+ellenoriz('Étlap postafiók', function () {
+    $mailbox = cfg('etlap_mailbox');
+    if ($mailbox === '') {
+        return ['figyelem', 'Nincs beállítva (etlap_mailbox). Az automatikus étlapküldés ki van kapcsolva.'];
+    }
+    if ($mailbox === cfg('mail_from')) {
+        return ['figyelem', $mailbox . ' – ez ugyanaz, mint a feladó cím. Működik, de ide '
+                          . 'érkeznek a vendégek válaszai és a visszapattanó levelek is.'];
+    }
+    return ['ok', $mailbox];
+});
+
+ellenoriz('Beküldésre jogosultak', function () {
+    $cimek = etlap_bekuldok();
+    if (!$cimek) {
+        return ['hiba', 'Egy cím sincs megadva (etlap_bekuldok). Amíg üres, a rendszer '
+                      . 'MINDEN beküldött étlapot figyelmen kívül hagy.'];
+    }
+    return ['ok', implode(', ', $cimek)];
+});
+
+ellenoriz('Visszavonási idő', function () {
+    $perc = (int) cfg('etlap_varakozas_perc', '15');
+    if ($perc <= 0) {
+        return ['figyelem', 'Nulla perc: a kiküldés azonnal indul, nincs mód visszavonni.'];
+    }
+    return ['ok', $perc . ' perc'];
+});
+
+ellenoriz('Időzítő (cron)', function () {
+    $utolso = allapot_olvas('futar_utolso_futas');
+    if ($utolso === null) {
+        return ['hiba', 'A futár még soha nem futott le. Amíg az időzítő nincs beállítva '
+                      . 'a tárhelyen, a beküldött étlapok nem mennek ki. Lásd: docs/etlap-kuldes.md'];
+    }
+
+    $eltelt = time() - (int) strtotime($utolso);
+    if ($eltelt > 900) {
+        return ['hiba', sprintf('Utoljára %s (%d perce) futott – úgy tűnik, az időzítő megállt.',
+                                $utolso, (int) round($eltelt / 60))];
+    }
+
+    return ['ok', 'utoljára: ' . $utolso];
+});
+
+ellenoriz('Elakadt kiküldés', function () {
+    $n = (int) db()->query(
+        'SELECT COUNT(*) FROM etlap_kuldes WHERE status = "hiba"'
+    )->fetchColumn();
+
+    return $n === 0
+        ? ['ok', 'nincs']
+        : ['figyelem', $n . ' kiküldés hibával állt meg. A részletek az '
+                     . 'Étlap kiküldések oldalon láthatók.'];
+});
 
 // ---------- Hibanaplo ----------
 $naploSorok = [];

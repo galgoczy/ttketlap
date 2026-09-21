@@ -1,0 +1,144 @@
+# Automatikus étlapküldés
+
+Az üzletvezető elküldi a napi étlapot PDF-ben egy postafiókba, a rendszer
+pedig kiküldi minden feliratkozónak. Ez az útmutató végigvezet a beállításon.
+
+## Hogyan működik
+
+1. Az üzletvezető ráküldi a PDF-et az étlap-postafiókra (pl. `etlap@pepperhouse.hu`).
+   A levél szövege lesz a körlevél bevezetője, a tárgya pedig a körlevél tárgya.
+2. A tárhelyen percenként lefut a `futar.php`. Megnézi a postafiókot, és ha
+   talál jogosult feladótól érkezett, PDF-et tartalmazó levelet, előkészíti
+   a kiküldést.
+3. **A beküldő visszakap egy előnézetet**, pontosan azzal a levéllel, ami
+   ki fog menni – benne egy „Mégsem" linkkel.
+4. Ha 15 percig senki nem nyúl hozzá, a kiküldés elindul. A leveleket a
+   rendszer **egyesével** küldi, mindenkinek a saját leiratkozó linkjével.
+5. A végén a beküldő kap egy összegzést: hány címre ment ki.
+
+Az állapot bármikor megnézhető az admin felületen: **Étlap kiküldések**.
+
+## Miért nem kerül licencbe
+
+Az étlap-postafiók legyen **megosztott postafiók** (shared mailbox). Az M365-ben
+ez ingyenes, 50 GB-ig nem kell hozzá licenc. Nem is kell bele soha belépni –
+a rendszer a Graph API-n keresztül olvassa.
+
+## 1. A postafiók létrehozása
+
+Microsoft 365 admin központ → **Csapatok és csoportok** → **Megosztott postafiókok**
+→ **Megosztott postafiók hozzáadása**. Név: pl. `etlap@pepperhouse.hu`.
+
+### Ezt a lépést ne hagyd ki
+
+Állítsd be, hogy erre a címre **csak a szervezeten belülről** lehessen írni.
+Enélkül bárki az internetről beküldhetne ide egy PDF-et.
+
+Exchange admin központ → **Címzettek** → **Postafiókok** → az étlap-postafiók →
+**Levélfolyam beállításai** → **Kézbesítési korlátozások** → kapcsold be, hogy
+*csak hitelesített feladóktól* fogad levelet.
+
+Ez a védelem első fele. A második a `etlap_bekuldok` lista a beállításokban:
+a rendszer csak az ott felsorolt címekről érkező leveleket dolgozza fel.
+
+## 2. Jogosultság az alkalmazásnak
+
+Az app registration eddig csak küldeni tudott. Most olvasnia is kell:
+
+Entra admin központ → **App registrations** → az alkalmazás → **API permissions**
+→ **Add a permission** → Microsoft Graph → **Application permissions** →
+`Mail.Read` → majd **Grant admin consent**.
+
+### Érdemes szűkíteni
+
+Az alkalmazás-szintű `Mail.Send` és `Mail.Read` a tenant **összes** postafiókját
+eléri. Érdemes ezt a két címre korlátozni egy hozzáférési szabállyal
+(Exchange Online PowerShell):
+
+```powershell
+New-ApplicationAccessPolicy -AppId <az alkalmazás azonosítója> `
+  -PolicyScopeGroupId <egy biztonsági csoport, amiben a két postafiók van> `
+  -AccessRight RestrictAccess `
+  -Description "TTK Kantin etlaprendszer"
+```
+
+Ezt az M365-öt kezelő kolléga tudja megcsinálni. Nem kötelező a működéshez,
+de enélkül egy kiszivárgott jelszó (client secret) a teljes levelezéshez
+adna hozzáférést.
+
+## 3. Adatbázis
+
+Futtasd le a `sql/etlap-kuldes.sql` fájlt a Hostinger phpMyAdmin felületén.
+Két táblát hoz létre: `etlap_kuldes` és `rendszer_allapot`.
+
+## 4. Beállítások a config.php-ban
+
+```php
+'etlap_mailbox'        => 'etlap@pepperhouse.hu',
+'etlap_bekuldok'       => 'uzletvezeto@pepperhouse.hu',
+'etlap_varakozas_perc' => '15',
+'cron_kulcs'           => '',   // csak webcímes indításhoz kell
+```
+
+Több beküldőt vesszővel válassz el.
+
+## 5. Az időzítő (cron) beállítása
+
+Hostinger hPanel → **Speciális** → **Cron-feladatok**.
+
+- Gyakoriság: **percenként** (vagy 5 percenként, ha a tárhely ennél ritkábbat enged)
+- Parancs:
+
+```
+/usr/bin/php /home/<a te felhasználód>/public_html/futar.php
+```
+
+A pontos elérési utat a Fájlkezelőben látod. **Így a futár kívülről egyáltalán
+nem érhető el** – ez a biztonságos megoldás.
+
+Ha a tárhely csak webcímes időzítést enged, akkor adj meg egy `cron_kulcs`
+értéket (`openssl rand -hex 24`), és ezt a címet időzítsd:
+
+```
+https://ttketlap.pepperhouse.hu/futar.php?kulcs=<a kulcs>
+```
+
+Kulcs nélkül a `futar.php` 404-et ad, mintha nem is létezne.
+
+## 6. Próba
+
+1. Nyisd meg az **admin → Diagnosztika** oldalt. Az étlap-futár sorainak
+   zöldnek kell lenniük, köztük az „Időzítő (cron)" sornak.
+2. Iratkozz fel egy saját címmel a főoldalon.
+3. Küldj egy levelet PDF-fel az étlap-postafiókra egy jogosult címről.
+4. Pár percen belül meg kell érkeznie az előnézetnek. Ebben kattints a
+   **Mégsem** linkre – így ellenőrzöd a visszavonást anélkül, hogy bárkinek
+   kimenne levél.
+5. Küldd be újra, és most hagyd lefutni.
+
+## Ha valami nem stimmel
+
+| Tünet | Mit nézz meg |
+|---|---|
+| Nem jön előnézet | Diagnosztika → „Időzítő (cron)" sor. Ha „még soha", a cron nem fut. |
+| „Nem jogosult feladó" a naplóban | A beküldő címe nincs benne az `etlap_bekuldok` listában. |
+| „Nem találtunk PDF-et" válasz | A csatolmány nem PDF, vagy beágyazott képként ment. |
+| A kiküldés félbemaradt | Nem baj: a következő futás onnan folytatja, ahol abbahagyta. Senki nem kap két példányt. |
+| Sok a hibás cím | Ezek jellemzően megszűnt postafiókok. A részletek a hibanaplóban. |
+
+## Korlátok
+
+- **A PDF legfeljebb 3 MB** lehet. A Microsoft a levelet kb. 4 MB-ig fogadja,
+  és a csatolmány kódolása kb. harmadával növeli a méretet. Nagyobb PDF esetén
+  a beküldő kap egy értesítést, és nem megy ki semmi.
+- A kiküldés tempója szándékosan lassú (kb. másodpercenként egy fél levél),
+  mert az Exchange Online percenként korlátozott számú levelet enged.
+  Néhány száz címnél ez pár perc.
+- Két futás soha nem fedi át egymást: erre egy adatbázis-zár vigyáz.
+
+## Ami itt nem volt kipróbálható
+
+A fejlesztői gépen nem volt MySQL, ezért az adatbázissal dolgozó részek
+(a kiküldés nyilvántartása, a folytatás, a visszavonás) **csak az éles
+rendszeren ellenőrizhetők** – emiatt fontos a 6. pont szerinti próba,
+különösen a „Mégsem" gomb kipróbálása még azelőtt, hogy bárkinek levél menne.

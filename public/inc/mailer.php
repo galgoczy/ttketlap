@@ -47,9 +47,10 @@ function send_email(
     string $subject,
     string $htmlBody,
     string $textBody,
-    string $unsubscribeToken = ''
+    string $unsubscribeToken = '',
+    array $csatolmanyok = []
 ): void {
-    $mail = build_message($to, $subject, $htmlBody, $textBody, $unsubscribeToken);
+    $mail = build_message($to, $subject, $htmlBody, $textBody, $unsubscribeToken, $csatolmanyok);
 
     if (cfg('mail_transport', 'graph') === 'graph') {
         graph_send($mail);
@@ -68,7 +69,8 @@ function build_message(
     string $subject,
     string $htmlBody,
     string $textBody,
-    string $unsubscribeToken = ''
+    string $unsubscribeToken = '',
+    array $csatolmanyok = []
 ): PHPMailer {
     $mail = new PHPMailer(true);
 
@@ -86,6 +88,17 @@ function build_message(
         $mail->addCustomHeader('List-Unsubscribe', '<' . $url . '>');
         // Enelkul a Gmail nem jeleniti meg a sajat leiratkozo gombjat.
         $mail->addCustomHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
+    }
+
+    // Csatolmanyok. A tartalmat memoriabol adjuk at (addStringAttachment),
+    // mert a PDF az adatbazisban van, nem fajlkent a lemezen.
+    foreach ($csatolmanyok as $csatolmany) {
+        $mail->addStringAttachment(
+            $csatolmany['tartalom'],
+            $csatolmany['nev'],
+            PHPMailer::ENCODING_BASE64,
+            $csatolmany['tipus'] ?? 'application/pdf'
+        );
     }
 
     $mail->isHTML(true);
@@ -137,6 +150,43 @@ function graph_send(PHPMailer $mail): void
     graph_request($url, base64_encode($mime), 'text/plain', graph_token());
 }
 
+/** A Graph felhasznaloi (postafiok) vegpontjanak kezdete. */
+function graph_mailbox_url(string $mailbox, string $ut): string
+{
+    return 'https://graph.microsoft.com/v1.0/users/'
+        . rawurlencode($mailbox) . '/' . ltrim($ut, '/');
+}
+
+/**
+ * Olvasas a Graphbol, JSON valasszal.
+ *
+ * @param array<int,string> $extraHeaders
+ * @return array<string,mixed>
+ */
+function graph_get(string $url, array $extraHeaders = []): array
+{
+    $valasz = graph_http('GET', $url, graph_token(), '', '', $extraHeaders);
+    $adat   = json_decode($valasz, true);
+
+    if (!is_array($adat)) {
+        throw new RuntimeException('A Graph válasza nem értelmezhető.');
+    }
+
+    return $adat;
+}
+
+/** Egy level modositasa (nalunk: olvasottra allitas). */
+function graph_patch(string $url, array $adat): void
+{
+    graph_http(
+        'PATCH',
+        $url,
+        graph_token(),
+        (string) json_encode($adat, JSON_UNESCAPED_UNICODE),
+        'application/json'
+    );
+}
+
 /**
  * Hozzaferesi token kerese app regisztracioval (client credentials).
  * A token ~1 oraig ervenyes, ezert a keresen belul ujra felhasznaljuk.
@@ -174,45 +224,99 @@ function graph_token(): string
 }
 
 /**
+ * A Graph "lassits" valasza (HTTP 429). Kulon kivetel, mert ez nem hiba:
+ * a hivo fel megvarja a kert idot es ujraprobalja.
+ */
+class GraphLassitsException extends RuntimeException
+{
+    public int $varakozas;
+
+    public function __construct(int $varakozas)
+    {
+        $this->varakozas = $varakozas;
+        parent::__construct('A Microsoft átmenetileg lassításra kért.');
+    }
+}
+
+/**
  * Egy HTTPS POST keres. Hiba eseten beszedes kivetelt dob,
  * hogy az admin teszt gombja hasznalhato uzenetet tudjon mutatni.
  */
 function graph_request(string $url, string $body, string $contentType, string $token = ''): string
 {
+    return graph_http('POST', $url, $token, $body, $contentType);
+}
+
+/**
+ * Egy HTTPS keres tetszoleges modszerrel. A GET-et az etlap postafiok
+ * olvasasahoz hasznaljuk, a PATCH-et a level olvasottra allitasahoz.
+ *
+ * @param array<int,string> $extraHeaders
+ */
+function graph_http(
+    string $method,
+    string $url,
+    string $token = '',
+    string $body = '',
+    string $contentType = '',
+    array $extraHeaders = []
+): string {
     if (!function_exists('curl_init')) {
         throw new RuntimeException('A PHP cURL bővítmény nem érhető el a tárhelyen.');
     }
 
-    $headers = ['Content-Type: ' . $contentType];
+    $headers = $extraHeaders;
+    if ($contentType !== '') {
+        $headers[] = 'Content-Type: ' . $contentType;
+    }
     if ($token !== '') {
         $headers[] = 'Authorization: Bearer ' . $token;
     }
 
     $ch = curl_init($url);
     curl_setopt_array($ch, [
-        CURLOPT_POST           => true,
-        CURLOPT_POSTFIELDS     => $body,
+        CURLOPT_CUSTOMREQUEST  => $method,
         CURLOPT_HTTPHEADER     => $headers,
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT        => 30,
+        CURLOPT_TIMEOUT        => 60,
         CURLOPT_SSL_VERIFYPEER => true,
+        // A 429-es valasz Retry-After fejlecet kuld: az mondja meg,
+        // mennyit kell varni. Ezert a fejleceket is el kell kapnunk.
+        CURLOPT_HEADER         => true,
     ]);
+    if ($body !== '') {
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+    }
 
-    $response = curl_exec($ch);
-    $status   = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $error    = curl_error($ch);
+    $response  = curl_exec($ch);
+    $status    = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $fejlecHossz = (int) curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+    $error     = curl_error($ch);
     curl_close($ch);
 
     if ($response === false) {
         throw new RuntimeException('Hálózati hiba: ' . $error);
     }
 
-    // A sikeres sendMail 202-vel valaszol, ures torzzsel.
-    if ($status < 200 || $status >= 300) {
-        throw new RuntimeException(graph_error_message($status, (string) $response));
+    $response = (string) $response;
+    $fejlecek = substr($response, 0, $fejlecHossz);
+    $torzs    = substr($response, $fejlecHossz);
+
+    // Tul sok keres egyszerre: a Microsoft megmondja, mennyit varjunk.
+    if ($status === 429) {
+        $varakozas = 30;
+        if (preg_match('/^Retry-After:\s*(\d+)/mi', $fejlecek, $talalat)) {
+            $varakozas = max(1, min(300, (int) $talalat[1]));
+        }
+        throw new GraphLassitsException($varakozas);
     }
 
-    return (string) $response;
+    // A sikeres sendMail 202-vel valaszol, ures torzzsel.
+    if ($status < 200 || $status >= 300) {
+        throw new RuntimeException(graph_error_message($status, $torzs));
+    }
+
+    return $torzs;
 }
 
 /** A Microsoft hibavalaszabol olvashato uzenetet keszit. */
