@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/auth.php';
 require __DIR__ . '/../inc/etlap_futar.php';
+require_once __DIR__ . '/../inc/naplo.php';
 require_admin();
 
 /**
@@ -204,6 +205,24 @@ ellenoriz('`etlap_kuldes` tábla', function () {
         ? ['ok', 'megvan']
         : ['hiba', 'Nincs meg. Enélkül a beküldött étlapok nem mennek ki. '
                  . 'Futtasd le a sql/etlap-kuldes.sql fájlt a phpMyAdminban.'];
+});
+
+ellenoriz('Napló', function () {
+    // A tablat a rendszer magatol letrehozza, ha hianyzik.
+    naplo_tabla_biztositasa();
+    $n = (int) db()->query('SELECT COUNT(*) FROM futar_naplo')->fetchColumn();
+    $hibaStmt = db()->prepare(
+        'SELECT COUNT(*) FROM futar_naplo WHERE szint = ? AND ido >= ?'
+    );
+    $hibaStmt->execute(['hiba', date('Y-m-d H:i:s', time() - 86400)]);
+    $hibak = (int) $hibaStmt->fetchColumn();
+
+    if ($hibak > 0) {
+        return ['figyelem', sprintf('%d bejegyzés, ebből %d hiba az elmúlt napban. '
+                                  . 'Nézd meg a Napló oldalt.', $n, $hibak)];
+    }
+
+    return ['ok', $n . ' bejegyzés, az elmúlt napban hiba nem volt'];
 });
 
 ellenoriz('`rendszer_allapot` tábla', function () {

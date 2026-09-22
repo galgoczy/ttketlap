@@ -24,6 +24,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/mailer.php';
 require_once __DIR__ . '/email_template.php';
+require_once __DIR__ . '/naplo.php';
 
 /** A PDF legnagyobb merete. A Graph a nyers levelet ~4 MB-ig fogadja,
  *  es a base64 kodolas ~33%-kal novel, ezert marad 3 MB. */
@@ -60,7 +61,7 @@ function futar_fut(): array
                 $naplo = array_merge($naplo, $lepes());
             } catch (Throwable $hiba) {
                 error_log(sprintf('Etlap futar - %s: %s', $lepes, $hiba->getMessage()));
-                $naplo[] = 'Hiba (' . $lepes . '): ' . $hiba->getMessage();
+                $naplo[] = esemeny('hiba', lepes_neve($lepes) . ': ' . $hiba->getMessage());
             }
         }
     } finally {
@@ -69,8 +70,20 @@ function futar_fut(): array
     }
 
     allapot_ment('futar_utolso_futas', date('Y-m-d H:i:s'));
+    naplo_takaritas();
 
     return $naplo;
+}
+
+/** A lepesek emberi neve a naplohoz. */
+function lepes_neve(string $lepes): string
+{
+    return match ($lepes) {
+        'beerkezett_feldolgozas' => 'A postafiók ellenőrzése nem sikerült',
+        'kuldesek_inditasa'      => 'A kiküldések indítása nem sikerült',
+        'kuldes_folytatasa'      => 'A kiküldés megakadt',
+        default                  => 'Hiba',
+    };
 }
 
 /** Egy allapotertek eltarolasa (a diagnosztika oldal ezeket mutatja). */
@@ -143,7 +156,7 @@ function beerkezett_feldolgozas(): array
             $naplo[] = uzenet_feldolgozas($mailbox, $uzenet);
         } catch (Throwable $hiba) {
             error_log('Etlap futar - uzenet hiba: ' . $hiba->getMessage());
-            $naplo[] = 'Hiba egy levél feldolgozásakor: ' . $hiba->getMessage();
+            $naplo[] = esemeny('hiba', 'Hiba egy levél feldolgozásakor: ' . $hiba->getMessage());
         }
     }
 
@@ -162,7 +175,7 @@ function uzenet_feldolgozas(string $mailbox, array $uzenet): string
     $targy  = trim((string) ($uzenet['subject'] ?? ''));
 
     if ($id === '') {
-        return 'Azonosító nélküli levél, kihagyva.';
+        return esemeny('figyelem', 'Azonosító nélküli levél érkezett, kihagyva.');
     }
 
     // Hurokvedelem. NEM a felado cime alapjan dontunk: a felado cim
@@ -171,14 +184,18 @@ function uzenet_feldolgozas(string $mailbox, array $uzenet): string
     // kizarjuk azt az esetet, amikor a postafiok onmagatol kap levelet.
     if ($felado === mb_strtolower($mailbox) || sajat_levelunk($uzenet)) {
         uzenet_olvasott($mailbox, $id);
-        return 'Saját magunktól érkezett levél, kihagyva.';
+        return esemeny('info', 'Saját levelünk került vissza a postafiókba, kihagyva.');
     }
 
     if (!in_array($felado, etlap_bekuldok(), true)) {
         uzenet_olvasott($mailbox, $id);
         // Ismeretlen feladonak szandekosan NEM valaszolunk: a felado cime
         // hamisithato, es a valasz egy artatlan emberhez jutna el.
-        return 'Nem jogosult feladó (' . $felado . '), kihagyva.';
+        return esemeny('figyelem', sprintf(
+            'Levél érkezett nem jogosult feladótól (%s) – nem dolgoztuk fel. '
+            . 'Ha ez a cím is küldhet étlapot, vedd fel az etlap_bekuldok közé.',
+            $felado !== '' ? $felado : 'ismeretlen'
+        ));
     }
 
     $pdf = etlap_csatolmany($mailbox, $id);
@@ -193,7 +210,10 @@ function uzenet_feldolgozas(string $mailbox, array $uzenet): string
             . 'PDF, JPG vagy PNG formátumban, és küldje el újra. (Ha a képet a levél '
             . 'szövegébe illesztette be, próbálja inkább csatolmányként hozzáadni.)'
         );
-        return 'Nincs használható csatolmány a levélben, értesítettük a beküldőt.';
+        return esemeny('figyelem', sprintf(
+            '%s levelében nem volt PDF, JPG vagy PNG csatolmány. Értesítettük.',
+            $felado
+        ));
     }
 
     if (strlen($pdf['tartalom']) > ETLAP_MAX_PDF) {
@@ -209,7 +229,11 @@ function uzenet_feldolgozas(string $mailbox, array $uzenet): string
                 meret_szoveg(ETLAP_MAX_PDF)
             )
         );
-        return 'Túl nagy csatolmány, értesítettük a beküldőt.';
+        return esemeny('figyelem', sprintf(
+            '%s túl nagy fájlt küldött (%s). Értesítettük, nem ment ki semmi.',
+            $felado,
+            meret_szoveg(strlen($pdf['tartalom']))
+        ));
     }
 
     $bevezeto = tiszta_bevezeto((string) ($uzenet['body']['content'] ?? ''));
@@ -238,7 +262,7 @@ function uzenet_feldolgozas(string $mailbox, array $uzenet): string
 
     if ($stmt->rowCount() === 0) {
         uzenet_olvasott($mailbox, $id);
-        return 'Ezt a levelet már feldolgoztuk korábban.';
+        return esemeny('info', 'Egy korábban már feldolgozott levél újra előkerült, kihagyva.');
     }
 
     $kuldesId = (int) db()->lastInsertId();
@@ -254,10 +278,21 @@ function uzenet_feldolgozas(string $mailbox, array $uzenet): string
         )->execute([mb_substr('Az előnézet nem ment el: ' . $hiba->getMessage(), 0, 500), $kuldesId]);
 
         error_log('Etlap futar - elonezet hiba: ' . $hiba->getMessage());
-        return 'Az előnézetet nem sikerült elküldeni, a kiküldés nem indul el.';
+        return esemeny('hiba', sprintf(
+            'Az előnézetet nem sikerült elküldeni %s címre, ezért a kiküldés NEM indul el. Ok: %s',
+            $felado,
+            $hiba->getMessage()
+        ), $kuldesId);
     }
 
-    return sprintf('Új étlap "%s" (%s), előnézet elküldve: %s', $targy, $pdf['nev'], $felado);
+    return esemeny('info', sprintf(
+        'Új étlap érkezett %s címről: „%s" (%s, %s). Előnézet elküldve, a kiküldés %s-kor indul.',
+        $felado,
+        $targy,
+        $pdf['nev'],
+        meret_szoveg(strlen($pdf['tartalom'])),
+        date('H:i', strtotime($kuldesIdeje))
+    ), $kuldesId);
 }
 
 /**
@@ -736,17 +771,32 @@ function ertesito_bekuldonek(string $cim, string $targy, string $szoveg): void
  */
 function kuldesek_inditasa(): array
 {
-    $stmt = db()->prepare(
-        'UPDATE etlap_kuldes SET status = "kuldes"
-          WHERE status = "elonezet" AND kuldes_ideje <= NOW()'
+    $esedekes = db()->prepare(
+        'SELECT id, targy FROM etlap_kuldes
+          WHERE status = "elonezet" AND kuldes_ideje <= ?
+          ORDER BY id'
     );
-    $stmt->execute();
+    $esedekes->execute([date('Y-m-d H:i:s')]);
 
-    if ($stmt->rowCount() === 0) {
-        return [];
+    // A feltetelben ujra ott a status: ha kozben valaki visszavonta,
+    // ez nem indítja el.
+    $indit = db()->prepare(
+        'UPDATE etlap_kuldes SET status = "kuldes" WHERE id = ? AND status = "elonezet"'
+    );
+
+    $naplo = [];
+    foreach ($esedekes->fetchAll() as $sor) {
+        $indit->execute([(int) $sor['id']]);
+        if ($indit->rowCount() === 1) {
+            $naplo[] = esemeny('info', sprintf(
+                'Letelt a visszavonási idő, indul a kiküldés: „%s" – %d címre.',
+                $sor['targy'],
+                aktiv_cimzett_szam()
+            ), (int) $sor['id']);
+        }
     }
 
-    return [sprintf('%d kiküldés indul.', $stmt->rowCount())];
+    return $naplo;
 }
 
 /**
@@ -813,12 +863,12 @@ function kuldes_folytatasa(): array
         }
     }
 
-    return [sprintf(
-        'Kiküldés folyamatban (#%d): eddig %d levél ment el, %d hibás. A következő futás folytatja.',
-        $kuldesId,
+    return [esemeny('info', sprintf(
+        'Kiküldés folyamatban: „%s" – eddig %d levél ment el%s. A következő futás folytatja.',
+        $kuldes['targy'],
         (int) $kuldes['kikuldve'],
-        (int) $kuldes['hibas']
-    )];
+        (int) $kuldes['hibas'] > 0 ? ', ' . (int) $kuldes['hibas'] . ' nem sikerült' : ''
+    ), $kuldesId)];
 }
 
 /**
@@ -848,19 +898,26 @@ function egy_cimzettnek(array $kuldes, array $cimzett): bool
 
             return true;
         } catch (GraphLassitsException $lassits) {
+            esemeny('figyelem', sprintf(
+                'A Microsoft lassításra kért, %d másodpercet várunk (ez nem hiba).',
+                $lassits->varakozas
+            ), (int) $kuldes['id']);
             sleep($lassits->varakozas);
         } catch (Throwable $hiba) {
-            error_log(sprintf(
-                'Etlap futar - nem ment el (%s): %s',
+            esemeny('hiba', sprintf(
+                'Nem ment el %s címre: %s',
                 $cimzett['email'],
                 $hiba->getMessage()
-            ));
+            ), (int) $kuldes['id']);
 
             return false;
         }
     }
 
-    error_log('Etlap futar - tulterhelés miatt kimaradt: ' . $cimzett['email']);
+    esemeny('hiba', sprintf(
+        'Nem ment el %s címre: a Microsoft háromszor is lassításra kért, kihagytuk.',
+        $cimzett['email']
+    ), (int) $kuldes['id']);
 
     return false;
 }
@@ -874,8 +931,8 @@ function egy_cimzettnek(array $kuldes, array $cimzett): bool
 function kuldes_lezaras(array $kuldes): array
 {
     db()->prepare(
-        'UPDATE etlap_kuldes SET status = "kesz", befejezve = NOW() WHERE id = ?'
-    )->execute([(int) $kuldes['id']]);
+        'UPDATE etlap_kuldes SET status = "kesz", befejezve = ? WHERE id = ?'
+    )->execute([date('Y-m-d H:i:s'), (int) $kuldes['id']]);
 
     $osszegzes = sprintf(
         'Az étlap kiküldése befejeződött. Elküldve: %d címre.',
@@ -885,14 +942,18 @@ function kuldes_lezaras(array $kuldes): array
     if ((int) $kuldes['hibas'] > 0) {
         $osszegzes .= sprintf(
             ' %d címre nem sikerült elküldeni – ezek jellemzően megszűnt '
-            . 'vagy elgépelt címek. A részletek a hibanaplóban vannak.',
+            . 'vagy elgépelt címek. A részletek az admin felület Napló oldalán láthatók.',
             (int) $kuldes['hibas']
         );
     }
 
     ertesito_bekuldonek((string) $kuldes['felado'], 'Kiküldve: ' . $kuldes['targy'], $osszegzes);
 
-    return [$osszegzes];
+    return [esemeny(
+        (int) $kuldes['hibas'] > 0 ? 'figyelem' : 'siker',
+        '„' . $kuldes['targy'] . '": ' . $osszegzes,
+        (int) $kuldes['id']
+    )];
 }
 
 // ---------------------------------------------------------------------

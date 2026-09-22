@@ -856,3 +856,6 @@ textarea.input {
 @media (min-width: 40rem) {
   .page__logo { width: 180px; }
 }
+
+/* Naplo: az idopont ne torjon ket sorba. */
+.naplo__ido { white-space: nowrap; }

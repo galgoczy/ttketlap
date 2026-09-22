@@ -25,11 +25,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'UPDATE etlap_kuldes SET status = "megszakitva", befejezve = NOW()
                   WHERE id = ? AND status = "elonezet"'
             );
-            $frissit->execute([(int) ($_POST['kuldes_id'] ?? 0)]);
+            $kuldesId = (int) ($_POST['kuldes_id'] ?? 0);
+            $frissit->execute([$kuldesId]);
 
-            $uzenet = $frissit->rowCount() === 1
-                ? 'success:A kiküldést visszavontuk, ez az étlap nem megy ki.'
-                : 'error:Ezt a kiküldést már nem lehet visszavonni.';
+            if ($frissit->rowCount() === 1) {
+                $visszavont = kuldes_betolt($kuldesId);
+                esemeny('figyelem', sprintf(
+                    'Visszavonva az admin felületről: „%s". Nem ment ki senkinek.',
+                    $visszavont['targy'] ?? '?'
+                ), $kuldesId);
+                $uzenet = 'success:A kiküldést visszavontuk, ez az étlap nem megy ki.';
+            } else {
+                $uzenet = 'error:Ezt a kiküldést már nem lehet visszavonni.';
+            }
         } catch (Throwable $kivetel) {
             error_log('Kuldes visszavonas hiba: ' . $kivetel->getMessage());
             $uzenet = 'error:Technikai hiba történt.';
@@ -126,7 +134,8 @@ render_header('Étlap kiküldések', true, true);
                         <td><?= e((string) $sor['felado']) ?></td>
                         <td>
                             <?= e((string) $sor['targy']) ?><br>
-                            <span class="hint"><?= e((string) $sor['pdf_nev']) ?></span>
+                            <span class="hint"><?= e((string) $sor['pdf_nev']) ?></span><br>
+                            <a class="hint" href="/admin/naplo.php?kuldes=<?= (int) $sor['id'] ?>">mi történt vele?</a>
                         </td>
                         <td>
                             <span class="<?= $osztaly ?>"><?= e($cimke) ?></span>
@@ -165,6 +174,7 @@ render_header('Étlap kiküldések', true, true);
 
     <div class="toolbar mt-6">
         <a class="btn btn--secondary btn--small" href="/admin/">Vissza a feliratkozókhoz</a>
+        <a class="btn btn--secondary btn--small" href="/admin/naplo.php">Napló</a>
         <a class="btn btn--secondary btn--small" href="/admin/diagnosztika.php">Diagnosztika</a>
     </div>
 </div>

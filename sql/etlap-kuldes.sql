@@ -53,3 +53,16 @@ CREATE TABLE IF NOT EXISTS rendszer_allapot (
   frissitve DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (kulcs)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Esemenynaplo az admin "Naplo" oldalahoz. A rendszer ezt MAGATOL is
+-- letrehozza az elso bejegyzesnel, itt csak a teljesseg kedveert szerepel.
+CREATE TABLE IF NOT EXISTS futar_naplo (
+  id        INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ido       DATETIME     NOT NULL,
+  szint     ENUM('info','siker','figyelem','hiba') NOT NULL DEFAULT 'info',
+  uzenet    VARCHAR(1000) NOT NULL,
+  kuldes_id INT UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (id),
+  KEY idx_ido (ido),
+  KEY idx_szint (szint, ido)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

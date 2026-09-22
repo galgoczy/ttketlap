@@ -331,6 +331,30 @@ allit('a csak szóközből álló levél is alapszöveget kap',
     str_contains(etlap_level_html($csakSzokoz, '#'), 'Kedves Vendégünk!'));
 
 // ---------------------------------------------------------------
+fejezet('Napló');
+
+// A tesztgepen nincs adatbazis - pont jo: ezzel azt ellenorizzuk, hogy
+// a naplo hibaja SOSEM allitja meg a munkat.
+$eredmeny = null;
+$dobott   = false;
+try {
+    $eredmeny = esemeny('hiba', 'Próba bejegyzés');
+} catch (Throwable $e) {
+    $dobott = true;
+}
+allit('adatbázis nélkül sem dob hibát', !$dobott);
+allit('a szöveget visszaadja, hogy egy sorban lehessen naplózni és visszatérni',
+    $eredmeny === 'Próba bejegyzés', (string) $eredmeny);
+allit('ismeretlen szintnél sem dob hibát', esemeny('valami', 'x') === 'x');
+
+$dobottTakaritas = false;
+try { naplo_takaritas(); } catch (Throwable $e) { $dobottTakaritas = true; }
+allit('a takarítás sem dob hibát adatbázis nélkül', !$dobottTakaritas);
+
+allit('a lépések emberi nevet kapnak',
+    lepes_neve('beerkezett_feldolgozas') === 'A postafiók ellenőrzése nem sikerült');
+
+// ---------------------------------------------------------------
 echo "\n";
 printf("Összesen: %d rendben, %d hiba\n", $GLOBALS['okk'], $GLOBALS['hibak']);
 exit($GLOBALS['hibak'] === 0 ? 0 : 1);

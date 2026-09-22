@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/inc/bootstrap.php';
 require __DIR__ . '/inc/layout.php';
+require __DIR__ . '/inc/naplo.php';
 
 /**
  * A kikuldes visszavonasa. A linket az elonezet levele tartalmazza.
@@ -48,6 +49,10 @@ if (!preg_match('/^[a-f0-9]{64}$/', $token)) {
 
             if ($frissit->rowCount() === 1) {
                 $kesz = true;
+                esemeny('figyelem', sprintf(
+                    'Visszavonva az előnézet „Mégsem" gombjával: „%s". Nem ment ki senkinek.',
+                    $kuldes['targy']
+                ), (int) $kuldes['id']);
             } else {
                 $hiba = 'A kiküldés épp most indult el, ezért már nem lehet visszavonni.';
             }

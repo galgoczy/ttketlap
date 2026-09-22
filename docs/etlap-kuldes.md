@@ -19,6 +19,7 @@ végigvezet a beállításon.
 5. A végén a beküldő kap egy összegzést: hány címre ment ki.
 
 Az állapot bármikor megnézhető az admin felületen: **Étlap kiküldések**.
+Hogy pontosan mi történt és mikor, azt a **Napló** oldal mutatja.
 
 ### PDF vagy kép?
 
@@ -173,7 +174,22 @@ Kulcs nélkül a `futar.php` 404-et ad, mintha nem is létezne.
 | „Nem találtunk étlapot" válasz | A csatolmány nem PDF/JPG/PNG, vagy a kép a levél szövegébe lett beillesztve csatolmány helyett. |
 | A kép nem látszik a levélben | A levelezőprogram alapból blokkolja a képeket. A címzettnek engedélyeznie kell a megjelenítést. |
 | A kiküldés félbemaradt | Nem baj: a következő futás onnan folytatja, ahol abbahagyta. Senki nem kap két példányt. |
-| Sok a hibás cím | Ezek jellemzően megszűnt postafiókok. A részletek a hibanaplóban. |
+| Sok a hibás cím | Ezek jellemzően megszűnt postafiókok. A Napló oldalon címenként látszik, mi volt a gond. |
+| Nem tudod, mi történt | **Admin → Napló.** Szűrhető „Csak a problémák"-ra, és egy-egy kiküldés eseményeire. |
+
+## A napló
+
+Az **admin → Napló** oldal időrendben mutatja, mi történt: beérkezett
+étlap, előnézet, a kiküldés indulása és haladása, visszavonás, és minden
+hiba – emberi nyelven, címzett szintig.
+
+- Csak az érdemi események kerülnek bele. A percenkénti „nem volt teendő"
+  nem, különben napi 1440 üres sor fullasztaná el a lényeget. Hogy a
+  rendszer él-e, azt az oldal tetején az „utoljára ekkor nézett be" sor
+  mutatja.
+- A bejegyzések 60 napig maradnak meg, utána maguktól törlődnek.
+- A naplótáblát a rendszer magától létrehozza, nem kell hozzá phpMyAdmin.
+- Ha a napló írása valamiért nem sikerül, a kiküldés attól még megy tovább.
 
 ## Korlátok
 

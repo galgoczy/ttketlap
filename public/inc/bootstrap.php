@@ -92,6 +92,18 @@ function db(): PDO
         PDO::ATTR_EMULATE_PREPARES   => false,
     ]);
 
+    // Az adatbazis szerver oraja gyakran UTC-ben jar, a PHP viszont magyar
+    // ido szerint (lasd fent). Ha a ketto elter, a NOW()-val es az
+    // automatikus idobelyegekkel rogzitett idopontok orakkal elcsusznak.
+    // Ezert a kapcsolatot a PHP aktualis eltolasara allitjuk (pl. +02:00).
+    // Idozona-nevet ("Europe/Budapest") szandekosan nem hasznalunk: azt a
+    // megosztott tarhelyek MySQL-je sokszor nem ismeri.
+    try {
+        $pdo->exec("SET time_zone = '" . date('P') . "'");
+    } catch (Throwable $hiba) {
+        error_log('Az adatbazis idozonajat nem sikerult beallitani: ' . $hiba->getMessage());
+    }
+
     return $pdo;
 }
 

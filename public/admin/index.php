@@ -194,6 +194,7 @@ render_header('Feliratkozók', true, true);
             </button>
         </form>
         <a class="btn btn--primary btn--small" href="/admin/kuldesek.php">Étlap kiküldések</a>
+        <a class="btn btn--secondary btn--small" href="/admin/naplo.php">Napló</a>
         <a class="btn btn--primary btn--small" href="/admin/cimlista.php">Címlista másolása</a>
         <a class="btn btn--secondary btn--small" href="/admin/diagnosztika.php">Diagnosztika</a>
         <a class="btn btn--secondary btn--small" href="/admin/logout.php">Kilépés</a>

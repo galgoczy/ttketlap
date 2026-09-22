@@ -18,7 +18,7 @@ function render_header(string $title, bool $noindex = false, bool $wide = false)
      betujet eloretoltjuk, hogy ne legyen villanas az elso megjelenesnel. -->
 <link rel="preload" href="/assets/fonts/jost-latin-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/jost-latin-ext-400.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/css/app.css?v=4">
+<link rel="stylesheet" href="/assets/css/app.css?v=5">
 </head>
 <body>
 <div class="page">
