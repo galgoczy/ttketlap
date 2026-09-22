@@ -34,6 +34,9 @@ require_once __DIR__ . '/lib/phpmailer/SMTP.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception as MailerException;
 
+/** Ezzel a fejleccel jeloljuk meg a sajat leveleinket (lasd build_message). */
+const ETLAP_JELOLO_FEJLEC = 'X-TTK-Kantin';
+
 /**
  * Egy level elkuldese.
  *
@@ -82,6 +85,11 @@ function build_message(
     $mail->setFrom(cfg('mail_from'), cfg('mail_from_name', cfg('site_name')));
     $mail->addReplyTo(cfg('contact_email'), cfg('site_name'));
     $mail->addAddress($to);
+
+    // Sajat jelolo minden kimeno levelen. Errol ismeri fel a futar, ha
+    // egy sajat levelunk valahogy visszakerulne az etlap postafiokba -
+    // enelkul vegtelen korbe kerulhetne a rendszer.
+    $mail->addCustomHeader(ETLAP_JELOLO_FEJLEC, '1');
 
     if ($unsubscribeToken !== '') {
         $url = unsubscribe_url($unsubscribeToken);

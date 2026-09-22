@@ -123,7 +123,7 @@ function beerkezett_feldolgozas(): array
     $url = graph_mailbox_url($mailbox, 'mailFolders/inbox/messages')
          . '?$filter=' . rawurlencode('isRead eq false')
          . '&$top=' . ETLAP_MAX_UZENET
-         . '&$select=' . rawurlencode('id,subject,from,receivedDateTime,hasAttachments,body');
+         . '&$select=' . rawurlencode('id,subject,from,receivedDateTime,hasAttachments,body,internetMessageHeaders');
 
     // A Prefer fejleccel a level torzset sima szovegkent kerjuk, igy nem
     // kell HTML-t bontogatnunk.
@@ -161,9 +161,11 @@ function uzenet_feldolgozas(string $mailbox, array $uzenet): string
         return 'Azonosító nélküli levél, kihagyva.';
     }
 
-    // Onmagunktol erkezo level: sose dolgozzuk fel, kulonben
-    // vegtelen korbe kerulhetunk.
-    if ($felado === mb_strtolower(cfg('mail_from')) || $felado === mb_strtolower($mailbox)) {
+    // Hurokvedelem. NEM a felado cime alapjan dontunk: a felado cim
+    // (mail_from) egyben jogosult bekuldo is lehet - nalunk pont az.
+    // Ehelyett a sajat leveleinken levo rejtett jelolot keressuk, es
+    // kizarjuk azt az esetet, amikor a postafiok onmagatol kap levelet.
+    if ($felado === mb_strtolower($mailbox) || sajat_levelunk($uzenet)) {
         uzenet_olvasott($mailbox, $id);
         return 'Saját magunktól érkezett levél, kihagyva.';
     }
@@ -250,6 +252,24 @@ function uzenet_feldolgozas(string $mailbox, array $uzenet): string
     }
 
     return sprintf('Új étlap "%s" (%s), előnézet elküldve: %s', $targy, $pdf['nev'], $felado);
+}
+
+/**
+ * Sajat rendszerunk kuldte-e a levelet? A build_message minden kimeno
+ * levelre rarakja a jelolo fejlecet, igy ezt biztosan felismerjuk -
+ * akkor is, ha valamilyen atiranyitas miatt kerult vissza hozzank.
+ *
+ * @param array<string,mixed> $uzenet
+ */
+function sajat_levelunk(array $uzenet): bool
+{
+    foreach ($uzenet['internetMessageHeaders'] ?? [] as $fejlec) {
+        if (strcasecmp((string) ($fejlec['name'] ?? ''), ETLAP_JELOLO_FEJLEC) === 0) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 /** A level olvasottra allitasa - igy a kovetkezo futas nem talalja meg ujra. */
@@ -554,17 +574,21 @@ function kuldes_folytatasa(): array
     $tempo    = max(0.0, (float) cfg('etlap_kuldes_tempo', '2.2'));
     $kuldesId = (int) $kuldes['id'];
 
+    // A sajat cimeink soha ne kapjanak korlevelet. Ha az etlap postafiok
+    // valahogy feliratkozna, a neki kikuldott etlap ujra bejonne a
+    // postafiokba, es a rendszer korbe-korbe kuldozgetne magat.
     $cimzettStmt = db()->prepare(
         'SELECT id, email, unsubscribe_token FROM subscribers
-          WHERE status = "active" AND id > ?
+          WHERE status = "active" AND id > ? AND email NOT IN (?, ?)
           ORDER BY id LIMIT 50'
     );
+    $sajatCimek = [mb_strtolower(cfg('etlap_mailbox')), mb_strtolower(cfg('mail_from'))];
     $haladasStmt = db()->prepare(
         'UPDATE etlap_kuldes SET utolso_cimzett_id = ?, kikuldve = ?, hibas = ? WHERE id = ?'
     );
 
     while (time() < $hatarido) {
-        $cimzettStmt->execute([(int) $kuldes['utolso_cimzett_id']]);
+        $cimzettStmt->execute([(int) $kuldes['utolso_cimzett_id'], $sajatCimek[0], $sajatCimek[1]]);
         $cimzettek = $cimzettStmt->fetchAll();
 
         if (!$cimzettek) {

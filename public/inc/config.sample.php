@@ -78,7 +78,10 @@ return [
     // Kik kuldhetnek be etlapot. Vesszovel elvalasztott cimek.
     // Ami nem ezekrol a cimekrol erkezik, azt a rendszer figyelmen kivul
     // hagyja - ez a fo vedelem az ellen, hogy idegen kuldessen ki barmit.
-    'etlap_bekuldok' => 'uzletvezeto@pelda.hu',
+    // A felado cim (mail_from) is szerepelhet itt: a vegtelen kor ellen
+    // nem a cim vedi a rendszert, hanem a kimeno leveleken levo rejtett
+    // jelolo fejlec. Lasd: docs/etlap-kuldes.md
+    'etlap_bekuldok' => 'marketing@pelda.hu, kantin@pelda.hu',
 
     // Ennyi percig var a rendszer a kikuldes elott. Ez alatt a bekuldo a
     // kapott elonezetben levo "Megsem" linkkel meg leallithatja.

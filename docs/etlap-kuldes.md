@@ -5,7 +5,7 @@ pedig kiküldi minden feliratkozónak. Ez az útmutató végigvezet a beállít�
 
 ## Hogyan működik
 
-1. Az üzletvezető ráküldi a PDF-et az étlap-postafiókra (pl. `etlap@pepperhouse.hu`).
+1. Az üzletvezető ráküldi a PDF-et az étlap-postafiókra (`ttk.etlap@pepperhouse.hu`).
    A levél szövege lesz a körlevél bevezetője, a tárgya pedig a körlevél tárgya.
 2. A tárhelyen percenként lefut a `futar.php`. Megnézi a postafiókot, és ha
    talál jogosult feladótól érkezett, PDF-et tartalmazó levelet, előkészíti
@@ -27,7 +27,7 @@ a rendszer a Graph API-n keresztül olvassa.
 ## 1. A postafiók létrehozása
 
 Microsoft 365 admin központ → **Csapatok és csoportok** → **Megosztott postafiókok**
-→ **Megosztott postafiók hozzáadása**. Név: pl. `etlap@pepperhouse.hu`.
+→ **Megosztott postafiók hozzáadása**. Név: **`ttk.etlap@pepperhouse.hu`**.
 
 ### Ezt a lépést ne hagyd ki
 
@@ -74,13 +74,28 @@ Két táblát hoz létre: `etlap_kuldes` és `rendszer_allapot`.
 ## 4. Beállítások a config.php-ban
 
 ```php
-'etlap_mailbox'        => 'etlap@pepperhouse.hu',
-'etlap_bekuldok'       => 'uzletvezeto@pepperhouse.hu',
+'etlap_mailbox'        => 'ttk.etlap@pepperhouse.hu',
+'etlap_bekuldok'       => 'marketing@pepperhouse.hu, ttk@pepperhouse.hu',
 'etlap_varakozas_perc' => '15',
 'cron_kulcs'           => '',   // csak webcímes indításhoz kell
 ```
 
-Több beküldőt vesszővel válassz el.
+Több beküldőt vesszővel válassz el. A kis- és nagybetű nem számít, a
+felesleges szóközöket a rendszer levágja.
+
+### A beküldő lehet ugyanaz, mint a feladó
+
+A fenti beállításban a `ttk@pepperhouse.hu` egyszerre **feladó cím**
+(`mail_from`) és **jogosult beküldő**. Ez így rendben van.
+
+Hogy ebből ne legyen végtelen kör (a rendszer kiküldi a saját levelét,
+az visszaérkezik, és újra kiküldi), két védelem van beépítve:
+
+1. Minden kimenő levélre rákerül egy rejtett jelölő fejléc
+   (`X-TTK-Kantin`). Ha egy ilyen levél bármilyen úton visszakerülne az
+   étlap-postafiókba, a rendszer felismeri és nem dolgozza fel.
+2. Az étlap-postafiók és a feladó cím **soha nem kap körlevelet**, akkor
+   sem, ha véletlenül feliratkozna.
 
 ## 5. Az időzítő (cron) beállítása
 

@@ -159,6 +159,48 @@ $GLOBALS['config']['etlap_bekuldok'] = '';
 allit('üres beállításból üres lista lesz', etlap_bekuldok() === []);
 
 // ---------------------------------------------------------------
+fejezet('Végtelen kör elleni védelem (az éles címekkel)');
+
+// Eles beallitas: a ttk@ egyszerre felado cim ES jogosult bekuldo.
+$GLOBALS['config']['mail_from']      = 'ttk@pepperhouse.hu';
+$GLOBALS['config']['etlap_mailbox']  = 'ttk.etlap@pepperhouse.hu';
+$GLOBALS['config']['etlap_bekuldok'] = 'marketing@pepperhouse.hu, ttk@pepperhouse.hu';
+
+allit(
+    'a ttk@ benne van a jogosult beküldőkben',
+    in_array('ttk@pepperhouse.hu', etlap_bekuldok(), true),
+    implode('|', etlap_bekuldok())
+);
+
+$jelolo = ETLAP_JELOLO_FEJLEC;
+
+$bekuldottLevel = ['internetMessageHeaders' => [
+    ['name' => 'Received', 'value' => 'valami'],
+    ['name' => 'Subject',  'value' => 'Napi étlap'],
+]];
+allit('a kézzel beküldött levelet NEM tartja sajátnak', !sajat_levelunk($bekuldottLevel));
+
+$sajatLevel = ['internetMessageHeaders' => [
+    ['name' => 'Received', 'value' => 'valami'],
+    ['name' => $jelolo,    'value' => '1'],
+]];
+allit('a saját levelünket felismeri', sajat_levelunk($sajatLevel));
+
+$maskepp = ['internetMessageHeaders' => [['name' => strtolower($jelolo), 'value' => '1']]];
+allit('kis-nagybetűtől függetlenül is', sajat_levelunk($maskepp));
+
+allit('fejléc nélküli levél nem saját', !sajat_levelunk([]));
+
+// A jelolo valoban rakerul minden kimeno levelre:
+$ellenorzo = build_message('x@pelda.hu', 'Tárgy', '<p>szöveg</p>', 'szöveg');
+$ellenorzo->isSMTP();
+$ellenorzo->preSend();
+allit(
+    'a jelölő fejléc rajta van a kimenő levélen',
+    str_contains($ellenorzo->getSentMIMEMessage(), $jelolo . ': 1')
+);
+
+// ---------------------------------------------------------------
 echo "\n";
 printf("Összesen: %d rendben, %d hiba\n", $GLOBALS['okk'], $GLOBALS['hibak']);
 exit($GLOBALS['hibak'] === 0 ? 0 : 1);
