@@ -283,6 +283,54 @@ if (!function_exists('imagecreatetruecolor')) {
 }
 
 // ---------------------------------------------------------------
+fejezet('Alapszöveg üres levélnél');
+
+$uresKep = ['targy' => 'Mai étlap', 'bevezeto' => '', 'pdf_nev' => 'etlap.jpg', 'pdf_tartalom' => 'x'];
+$uresPdf = ['targy' => 'Mai étlap', 'bevezeto' => '', 'pdf_nev' => 'etlap.pdf', 'pdf_tartalom' => 'x'];
+
+$uresHtml = etlap_level_html($uresKep, '#');
+allit('a megszólítás benne van', str_contains($uresHtml, 'Kedves Vendégünk!'));
+allit('a törzsszöveg benne van',
+    str_contains($uresHtml, 'Mellékelten küldjük friss étlapunkat'));
+allit('az aláírás benne van', str_contains($uresHtml, 'a TTK Kantin csapata'));
+
+// A sorrend a lenyeg: a kep az alairas ELE kerul.
+$kepHelye     = strpos($uresHtml, 'cid:etlap');
+$alairasHelye = strpos($uresHtml, 'a TTK Kantin csapata');
+allit('a kép az aláírás elé kerül', $kepHelye !== false && $kepHelye < $alairasHelye,
+    "kép: $kepHelye, aláírás: $alairasHelye");
+
+$uresPdfHtml = etlap_level_html($uresPdf, '#');
+allit('PDF-nél nincs fölösleges ismétlés',
+    !str_contains($uresPdfHtml, 'csatolmányában, PDF-ben'));
+allit('PDF-nél is ott az aláírás', str_contains($uresPdfHtml, 'a TTK Kantin csapata'));
+
+// Ha a bekuldo irt sajat szoveget, az alapszoveg NEM jelenik meg.
+$sajat = ['targy' => 'Mai étlap', 'bevezeto' => 'Ma rendezvény miatt rövidebb a választék.',
+          'pdf_nev' => 'etlap.pdf', 'pdf_tartalom' => 'x'];
+$sajatHtml = etlap_level_html($sajat, '#');
+allit('saját szövegnél nincs alapszöveg', !str_contains($sajatHtml, 'Kedves Vendégünk!'));
+allit('saját szövegnél a csatolmány-sor megmarad',
+    str_contains($sajatHtml, 'csatolmányában, PDF-ben'));
+allit('saját szöveg megjelenik', str_contains($sajatHtml, 'rendezvény miatt'));
+
+// A szoveges valtozat ugyanazt mondja.
+$uresSzoveg = etlap_level_szoveg($uresKep, '#');
+allit('a szöveges változatban is ott a megszólítás',
+    str_contains($uresSzoveg, 'Kedves Vendégünk!'));
+allit('a szöveges változatban is ott az aláírás',
+    str_contains($uresSzoveg, 'a TTK Kantin csapata'));
+allit('a szöveges változatban is az aláírás van hátul',
+    strpos($uresSzoveg, 'a TTK Kantin csapata') > strpos($uresSzoveg, 'képként'));
+allit('a szöveges változatban nincs HTML', !str_contains($uresSzoveg, '<'));
+
+// Csak szokozokbol allo torzs is uresnek szamit.
+$csakSzokoz = $uresKep;
+$csakSzokoz['bevezeto'] = "   \n\n  ";
+allit('a csak szóközből álló levél is alapszöveget kap',
+    str_contains(etlap_level_html($csakSzokoz, '#'), 'Kedves Vendégünk!'));
+
+// ---------------------------------------------------------------
 echo "\n";
 printf("Összesen: %d rendben, %d hiba\n", $GLOBALS['okk'], $GLOBALS['hibak']);
 exit($GLOBALS['hibak'] === 0 ? 0 : 1);

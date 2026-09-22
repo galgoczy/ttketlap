@@ -461,26 +461,54 @@ function meret_szoveg(int $bajt): string
  */
 function etlap_level_html(array $kuldes, string $leiratkozoUrl): string
 {
-    $torzs = '';
-
-    foreach (bevezeto_bekezdesek((string) $kuldes['bevezeto']) as $bekezdes) {
-        $torzs .= email_bekezdes($bekezdes);
-    }
-
-    if (kuldes_kep_e($kuldes)) {
-        // Kepnel a levél torzsebe agyazzuk: a cimzett rogton latja,
-        // nem kell megnyitnia semmit.
-        $torzs .= email_kep(ETLAP_KEP_CID);
-    } else {
-        $torzs .= email_bekezdes('Az étlapot a levél csatolmányában, PDF-ben találja.', true);
-    }
-
     return email_keret(
         (string) $kuldes['targy'],
-        $torzs,
+        etlap_torzs($kuldes),
         kuldes_kep_e($kuldes) ? 'Itt a mai étlap.' : 'A mai étlap a csatolmányban.',
         $leiratkozoUrl
     );
+}
+
+/**
+ * A level torzse: bevezeto szoveg + az etlap (beagyazott kep vagy a
+ * csatolmanyra utalo sor). Az elonezet is ezt hasznalja, igy a bekuldo
+ * pontosan azt latja, amit a cimzettek kapnak.
+ *
+ * @param array<string,mixed> $kuldes
+ */
+function etlap_torzs(array $kuldes): string
+{
+    $bekezdesek = bevezeto_bekezdesek((string) $kuldes['bevezeto']);
+    $kep = kuldes_kep_e($kuldes);
+
+    // Sajat alapszovegnel tudjuk, hol az alairas: az mindig az utolso
+    // bekezdes. Az etlapot ele tesszuk, kulonben a kep az alairas ala
+    // csusszan. A bekuldo sajat szovegenel ezt nem talalgatjuk.
+    $alairas = '';
+    if (alap_bevezeto_e($kuldes) && count($bekezdesek) > 1) {
+        $alairas = (string) array_pop($bekezdesek);
+    }
+
+    $torzs = '';
+    foreach ($bekezdesek as $bekezdes) {
+        $torzs .= email_bekezdes($bekezdes);
+    }
+
+    if ($kep) {
+        // Kepnel a level torzsebe agyazzuk: a cimzett rogton latja,
+        // nem kell megnyitnia semmit.
+        $torzs .= email_kep(ETLAP_KEP_CID);
+    } elseif (!alap_bevezeto_e($kuldes)) {
+        // Az alapszoveg maga mondja, hogy mellekelten kuldjuk - ott ez
+        // a sor csak ismetles lenne.
+        $torzs .= email_bekezdes('Az étlapot a levél csatolmányában, PDF-ben találja.', true);
+    }
+
+    if ($alairas !== '') {
+        $torzs .= email_bekezdes($alairas);
+    }
+
+    return $torzs;
 }
 
 /** A beagyazott kep azonositoja a levelben. */
@@ -543,15 +571,28 @@ function etlap_level_szoveg(array $kuldes, string $leiratkozoUrl): string
     $sorok = [(string) $kuldes['targy'], ''];
 
     $bevezeto = trim((string) $kuldes['bevezeto']);
-    if ($bevezeto !== '') {
-        $sorok[] = $bevezeto;
-        $sorok[] = '';
+    $alairas  = '';
+
+    if ($bevezeto === '') {
+        // Ugyanaz a felepites, mint a HTML valtozatban: az alairas
+        // az etlap utan jon.
+        $bekezdesek = ETLAP_ALAP_BEVEZETO;
+        $alairas    = (string) array_pop($bekezdesek);
+        $bevezeto   = implode("\n\n", $bekezdesek);
     }
+
+    $sorok[] = $bevezeto;
+    $sorok[] = '';
 
     $sorok[] = kuldes_kep_e($kuldes)
         ? 'Az étlapot a levélben képként küldtük. Ha nem látja, engedélyezze a képek megjelenítését.'
         : 'Az étlapot a levél csatolmányában, PDF-ben találja.';
     $sorok[] = '';
+
+    if ($alairas !== '') {
+        $sorok[] = $alairas;
+        $sorok[] = '';
+    }
     $sorok[] = '--';
     $sorok[] = 'Ezt a levelet azért kapja, mert feliratkozott a TTK Kantin étlapjára.';
 
@@ -560,6 +601,24 @@ function etlap_level_szoveg(array $kuldes, string $leiratkozoUrl): string
     }
 
     return implode("\n", $sorok);
+}
+
+/**
+ * Ez a szoveg megy ki, ha a bekuldo ures levelet kuldott (csak csatolmanyt).
+ * Az utolso bekezdes az alairas - a kep/csatolmany ele kerul, hogy az
+ * alairas maradjon a levél vegen.
+ */
+const ETLAP_ALAP_BEVEZETO = [
+    'Kedves Vendégünk!',
+    'Mellékelten küldjük friss étlapunkat. Reméljük, hogy hamarosan ismét '
+    . 'vendégül láthatjuk!',
+    'a TTK Kantin csapata',
+];
+
+/** Sajat alapszoveggel megy-e ki a level, vagy a bekuldo irt sajatot? */
+function alap_bevezeto_e(array $kuldes): bool
+{
+    return trim((string) ($kuldes['bevezeto'] ?? '')) === '';
 }
 
 /**
@@ -572,7 +631,7 @@ function bevezeto_bekezdesek(string $bevezeto): array
     $bevezeto = trim($bevezeto);
 
     if ($bevezeto === '') {
-        return ['Kedves Feliratkozónk! Küldjük a mai étlapunkat.'];
+        return array_map('e', ETLAP_ALAP_BEVEZETO);
     }
 
     $bekezdesek = [];
@@ -585,7 +644,7 @@ function bevezeto_bekezdesek(string $bevezeto): array
         }
     }
 
-    return $bekezdesek ?: ['Kedves Feliratkozónk! Küldjük a mai étlapunkat.'];
+    return $bekezdesek ?: array_map('e', ETLAP_ALAP_BEVEZETO);
 }
 
 // ---------------------------------------------------------------------
@@ -621,16 +680,9 @@ function elonezet_kuldes(int $kuldesId): void
         . email_bekezdes('Ha minden rendben, nincs teendője.', true)
         . '</td></tr></table>';
 
-    $torzs = $doboz;
-    foreach (bevezeto_bekezdesek((string) $kuldes['bevezeto']) as $bekezdes) {
-        $torzs .= email_bekezdes($bekezdes);
-    }
-
-    // Az elonezet pontosan azt mutassa, amit a cimzettek kapnak: kepnel
-    // a beagyazott kepet, PDF-nel a csatolmanyra utalo sort.
-    $torzs .= kuldes_kep_e($kuldes)
-        ? email_kep(ETLAP_KEP_CID)
-        : email_bekezdes('Az étlapot a levél csatolmányában, PDF-ben találja.', true);
+    // Az elonezet pontosan azt mutassa, amit a cimzettek kapnak - ezert
+    // ugyanaz a fuggveny epiti a torzset, mint a kimeno levelnel.
+    $torzs = $doboz . etlap_torzs($kuldes);
 
     $html = email_keret(
         (string) $kuldes['targy'],
