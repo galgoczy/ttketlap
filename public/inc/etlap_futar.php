@@ -181,17 +181,19 @@ function uzenet_feldolgozas(string $mailbox, array $uzenet): string
         return 'Nem jogosult feladó (' . $felado . '), kihagyva.';
     }
 
-    $pdf = pdf_csatolmany($mailbox, $id);
+    $pdf = etlap_csatolmany($mailbox, $id);
 
     if ($pdf === null) {
         uzenet_olvasott($mailbox, $id);
         ertesito_bekuldonek(
             $felado,
-            'Nem találtunk PDF-et a levélben',
-            'A beküldött levélben nem volt PDF csatolmány, ezért nem küldtünk ki semmit. '
-            . 'Kérjük, csatolja az étlapot PDF formátumban, és küldje el újra.'
+            'Nem találtunk étlapot a levélben',
+            'A beküldött levélben nem volt olyan csatolmány, amit étlapként fel tudnánk '
+            . 'használni, ezért nem küldtünk ki semmit. Kérjük, csatolja az étlapot '
+            . 'PDF, JPG vagy PNG formátumban, és küldje el újra. (Ha a képet a levél '
+            . 'szövegébe illesztette be, próbálja inkább csatolmányként hozzáadni.)'
         );
-        return 'Nincs PDF a levélben, értesítettük a beküldőt.';
+        return 'Nincs használható csatolmány a levélben, értesítettük a beküldőt.';
     }
 
     if (strlen($pdf['tartalom']) > ETLAP_MAX_PDF) {
@@ -200,14 +202,14 @@ function uzenet_feldolgozas(string $mailbox, array $uzenet): string
             $felado,
             'Túl nagy a PDF',
             sprintf(
-                'A beküldött PDF %s, a megengedett legnagyobb méret pedig %s. '
+                'A beküldött fájl %s, a megengedett legnagyobb méret pedig %s. '
                 . 'Ezért nem küldtünk ki semmit. Kérjük, mentse kisebb méretben '
                 . '(a legtöbb PDF-készítőben van "kis méret" vagy "web" beállítás), és küldje el újra.',
                 meret_szoveg(strlen($pdf['tartalom'])),
                 meret_szoveg(ETLAP_MAX_PDF)
             )
         );
-        return 'Túl nagy PDF, értesítettük a beküldőt.';
+        return 'Túl nagy csatolmány, értesítettük a beküldőt.';
     }
 
     $bevezeto = tiszta_bevezeto((string) ($uzenet['body']['content'] ?? ''));
@@ -286,24 +288,32 @@ function uzenet_olvasott(string $mailbox, string $id): void
     );
 }
 
+/** Amit etlapkent elfogadunk: kiterjesztes => MIME tipus. */
+const ETLAP_TIPUSOK = [
+    'pdf'  => 'application/pdf',
+    'jpg'  => 'image/jpeg',
+    'jpeg' => 'image/jpeg',
+    'png'  => 'image/png',
+];
+
 /**
- * Az elso PDF csatolmany kikeresese.
+ * Az elso hasznalhato csatolmany kikeresese (PDF vagy kep).
  *
- * @return array{nev:string,tartalom:string}|null
+ * @return array{nev:string,tartalom:string,tipus:string}|null
  */
-function pdf_csatolmany(string $mailbox, string $uzenetId): ?array
+function etlap_csatolmany(string $mailbox, string $uzenetId): ?array
 {
     $url = graph_mailbox_url($mailbox, 'messages/' . rawurlencode($uzenetId) . '/attachments');
     $valasz = graph_get($url, [], 'a csatolmány letöltése');
 
     foreach ($valasz['value'] ?? [] as $csatolmany) {
-        $nev   = (string) ($csatolmany['name'] ?? '');
-        $tipus = mb_strtolower((string) ($csatolmany['contentType'] ?? ''));
+        $nev = (string) ($csatolmany['name'] ?? '');
 
-        $pdfE = $tipus === 'application/pdf'
-             || mb_strtolower(substr($nev, -4)) === '.pdf';
+        // A fajlnev kiterjesztese alapjan dontunk, mert a levelezoprogramok
+        // sokfele contentType-ot irnak ugyanarra a fajtara.
+        $kiterjesztes = mb_strtolower((string) pathinfo($nev, PATHINFO_EXTENSION));
 
-        if (!$pdfE || empty($csatolmany['contentBytes'])) {
+        if (!isset(ETLAP_TIPUSOK[$kiterjesztes]) || empty($csatolmany['contentBytes'])) {
             continue;
         }
 
@@ -312,10 +322,76 @@ function pdf_csatolmany(string $mailbox, string $uzenetId): ?array
             continue;
         }
 
-        return ['nev' => $nev !== '' ? $nev : 'etlap.pdf', 'tartalom' => $tartalom];
+        $tipus = ETLAP_TIPUSOK[$kiterjesztes];
+
+        // Telefonnal keszult fenykep konnyen 5-6 MB. Kicsinyitjuk, hogy
+        // beleferjen a korlatba - es hogy a cimzettek postafiokjat se
+        // terheljuk feleslegesen.
+        if (kep_e($tipus)) {
+            $tartalom = kep_kicsinyites($tartalom, $tipus);
+        }
+
+        return [
+            'nev'      => $nev !== '' ? $nev : 'etlap.' . $kiterjesztes,
+            'tartalom' => $tartalom,
+            'tipus'    => $tipus,
+        ];
     }
 
     return null;
+}
+
+/** Kep-e a csatolmany? (A PDF-et csatolmanykent kuldjuk, a kepet beagyazzuk.) */
+function kep_e(string $tipus): bool
+{
+    return str_starts_with($tipus, 'image/');
+}
+
+/**
+ * Nagy kep atmeretezese. Ha nincs GD bovitmeny a tarhelyen, vagy a kep
+ * mar eleg kicsi, valtozatlanul adja vissza - inkabb menjen ki az eredeti,
+ * mint hogy elszalljon a feldolgozas.
+ */
+function kep_kicsinyites(string $tartalom, string $tipus, int $maxSzelesseg = 1600): string
+{
+    if (!function_exists('imagecreatefromstring') || !function_exists('imagescale')) {
+        return $tartalom;
+    }
+
+    try {
+        $kep = @imagecreatefromstring($tartalom);
+        if ($kep === false) {
+            return $tartalom;
+        }
+
+        $szelesseg = imagesx($kep);
+        if ($szelesseg <= $maxSzelesseg && strlen($tartalom) <= ETLAP_MAX_PDF) {
+            imagedestroy($kep);
+            return $tartalom;
+        }
+
+        $kicsi = imagescale($kep, min($szelesseg, $maxSzelesseg));
+        imagedestroy($kep);
+
+        if ($kicsi === false) {
+            return $tartalom;
+        }
+
+        ob_start();
+        if ($tipus === 'image/png') {
+            imagepng($kicsi, null, 6);
+        } else {
+            imagejpeg($kicsi, null, 82);
+        }
+        $uj = (string) ob_get_clean();
+        imagedestroy($kicsi);
+
+        // Csak akkor cserelunk, ha tenyleg nyertunk vele.
+        return ($uj !== '' && strlen($uj) < strlen($tartalom)) ? $uj : $tartalom;
+    } catch (Throwable $hiba) {
+        error_log('Etlap futar - kep kicsinyites nem sikerult: ' . $hiba->getMessage());
+        return $tartalom;
+    }
 }
 
 /**
@@ -391,14 +467,69 @@ function etlap_level_html(array $kuldes, string $leiratkozoUrl): string
         $torzs .= email_bekezdes($bekezdes);
     }
 
-    $torzs .= email_bekezdes('Az étlapot a levél csatolmányában, PDF-ben találja.', true);
+    if (kuldes_kep_e($kuldes)) {
+        // Kepnel a levél torzsebe agyazzuk: a cimzett rogton latja,
+        // nem kell megnyitnia semmit.
+        $torzs .= email_kep(ETLAP_KEP_CID);
+    } else {
+        $torzs .= email_bekezdes('Az étlapot a levél csatolmányában, PDF-ben találja.', true);
+    }
 
     return email_keret(
         (string) $kuldes['targy'],
         $torzs,
-        'A mai étlap a csatolmányban.',
+        kuldes_kep_e($kuldes) ? 'Itt a mai étlap.' : 'A mai étlap a csatolmányban.',
         $leiratkozoUrl
     );
+}
+
+/** A beagyazott kep azonositoja a levelben. */
+const ETLAP_KEP_CID = 'etlap';
+
+/**
+ * Kep-e a kikuldeshez tartozo fajl? A tarolt fajlnev kiterjesztesebol
+ * dontjuk el, igy nem kellett uj oszlop az adatbazisba.
+ *
+ * @param array<string,mixed> $kuldes
+ */
+function kuldes_kep_e(array $kuldes): bool
+{
+    return kep_e(kuldes_fajl_tipusa($kuldes));
+}
+
+/**
+ * A kikuldeshez tartozo fajl MIME tipusa a fajlnev alapjan.
+ *
+ * @param array<string,mixed> $kuldes
+ */
+function kuldes_fajl_tipusa(array $kuldes): string
+{
+    $kiterjesztes = mb_strtolower(
+        (string) pathinfo((string) ($kuldes['pdf_nev'] ?? ''), PATHINFO_EXTENSION)
+    );
+
+    return ETLAP_TIPUSOK[$kiterjesztes] ?? 'application/octet-stream';
+}
+
+/**
+ * A kikuldeshez tartozo csatolmany a levelkuldonek atadhato formaban.
+ *
+ * @param array<string,mixed> $kuldes
+ * @return array<int,array<string,string>>
+ */
+function kuldes_csatolmanya(array $kuldes): array
+{
+    $csatolmany = [
+        'nev'      => (string) $kuldes['pdf_nev'],
+        'tartalom' => (string) $kuldes['pdf_tartalom'],
+        'tipus'    => kuldes_fajl_tipusa($kuldes),
+    ];
+
+    if (kuldes_kep_e($kuldes)) {
+        $csatolmany['cid'] = ETLAP_KEP_CID;
+    }
+
+    return [$csatolmany];
 }
 
 /**
@@ -417,7 +548,9 @@ function etlap_level_szoveg(array $kuldes, string $leiratkozoUrl): string
         $sorok[] = '';
     }
 
-    $sorok[] = 'Az étlapot a levél csatolmányában, PDF-ben találja.';
+    $sorok[] = kuldes_kep_e($kuldes)
+        ? 'Az étlapot a levélben képként küldtük. Ha nem látja, engedélyezze a képek megjelenítését.'
+        : 'Az étlapot a levél csatolmányában, PDF-ben találja.';
     $sorok[] = '';
     $sorok[] = '--';
     $sorok[] = 'Ezt a levelet azért kapja, mert feliratkozott a TTK Kantin étlapjára.';
@@ -478,7 +611,7 @@ function elonezet_kuldes(int $kuldesId): void
         . email_bekezdes('<strong>Ez csak előnézet – még nem ment ki senkinek.</strong>')
         . email_bekezdes(sprintf(
             'A kiküldés <strong>%s-kor</strong> indul, és <strong>%d címre</strong> megy majd ki. '
-            . 'Az alábbi levelet fogják megkapni, ezzel a csatolmánnyal: %s.',
+            . 'Az alábbi levelet fogják megkapni, ezzel a fájllal: %s.',
             date('H:i', strtotime((string) $kuldes['kuldes_ideje'])),
             $cimzettek,
             e((string) $kuldes['pdf_nev'])
@@ -492,7 +625,12 @@ function elonezet_kuldes(int $kuldesId): void
     foreach (bevezeto_bekezdesek((string) $kuldes['bevezeto']) as $bekezdes) {
         $torzs .= email_bekezdes($bekezdes);
     }
-    $torzs .= email_bekezdes('Az étlapot a levél csatolmányában, PDF-ben találja.', true);
+
+    // Az elonezet pontosan azt mutassa, amit a cimzettek kapnak: kepnel
+    // a beagyazott kepet, PDF-nel a csatolmanyra utalo sort.
+    $torzs .= kuldes_kep_e($kuldes)
+        ? email_kep(ETLAP_KEP_CID)
+        : email_bekezdes('Az étlapot a levél csatolmányában, PDF-ben találja.', true);
 
     $html = email_keret(
         (string) $kuldes['targy'],
@@ -516,7 +654,7 @@ function elonezet_kuldes(int $kuldesId): void
         $html,
         $szoveg,
         '',
-        [['nev' => (string) $kuldes['pdf_nev'], 'tartalom' => (string) $kuldes['pdf_tartalom']]]
+        kuldes_csatolmanya($kuldes)
     );
 }
 
@@ -642,10 +780,7 @@ function egy_cimzettnek(array $kuldes, array $cimzett): bool
     $token = (string) $cimzett['unsubscribe_token'];
     $url   = unsubscribe_url($token);
 
-    $csatolmany = [[
-        'nev'      => (string) $kuldes['pdf_nev'],
-        'tartalom' => (string) $kuldes['pdf_tartalom'],
-    ]];
+    $csatolmany = kuldes_csatolmanya($kuldes);
 
     // A "lassits" valaszra varunk es ujraprobalunk - az nem hiba.
     for ($proba = 1; $proba <= 3; $proba++) {

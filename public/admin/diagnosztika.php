@@ -271,6 +271,17 @@ ellenoriz('Beküldésre jogosultak', function () {
     return ['ok', implode(', ', $cimek)];
 });
 
+ellenoriz('Képek kicsinyítése', function () {
+    if (!function_exists('imagecreatefromstring') || !function_exists('imagescale')) {
+        return ['figyelem', 'Nincs GD bővítmény a tárhelyen. A képes étlapok így is '
+                          . 'kimennek, de a rendszer nem tudja kicsinyíteni őket – '
+                          . 'egy telefonnal készült fénykép könnyen túllépi a 3 MB-os '
+                          . 'határt, és akkor visszautasítja.'];
+    }
+
+    return ['ok', 'működik (a nagy fényképeket 1600 pixel szélesre kicsinyíti)'];
+});
+
 ellenoriz('Visszavonási idő', function () {
     $perc = (int) cfg('etlap_varakozas_perc', '15');
     if ($perc <= 0) {

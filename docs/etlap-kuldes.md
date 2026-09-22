@@ -1,14 +1,16 @@
 # Automatikus étlapküldés
 
-Az üzletvezető elküldi a napi étlapot PDF-ben egy postafiókba, a rendszer
-pedig kiküldi minden feliratkozónak. Ez az útmutató végigvezet a beállításon.
+Az üzletvezető elküldi a napi étlapot egy postafiókba – **PDF-ben vagy
+képként** –, a rendszer pedig kiküldi minden feliratkozónak. Ez az útmutató
+végigvezet a beállításon.
 
 ## Hogyan működik
 
-1. Az üzletvezető ráküldi a PDF-et az étlap-postafiókra (`ttk.etlap@pepperhouse.hu`).
+1. Az üzletvezető ráküldi az étlapot az étlap-postafiókra
+   (`ttk.etlap@pepperhouse.hu`), **PDF, JPG vagy PNG csatolmányként**.
    A levél szövege lesz a körlevél bevezetője, a tárgya pedig a körlevél tárgya.
 2. A tárhelyen percenként lefut a `futar.php`. Megnézi a postafiókot, és ha
-   talál jogosult feladótól érkezett, PDF-et tartalmazó levelet, előkészíti
+   talál jogosult feladótól érkezett, csatolmányos levelet, előkészíti
    a kiküldést.
 3. **A beküldő visszakap egy előnézetet**, pontosan azzal a levéllel, ami
    ki fog menni – benne egy „Mégsem" linkkel.
@@ -17,6 +19,20 @@ pedig kiküldi minden feliratkozónak. Ez az útmutató végigvezet a beállít�
 5. A végén a beküldő kap egy összegzést: hány címre ment ki.
 
 Az állapot bármikor megnézhető az admin felületen: **Étlap kiküldések**.
+
+### PDF vagy kép?
+
+| | Mi történik |
+|---|---|
+| **PDF** | Csatolmányként megy. A vendégnek meg kell nyitnia, viszont nyomtatható és éles marad nagyításnál is. |
+| **JPG / PNG** | **A levél törzsébe ágyazva** megy: a vendég rögtön látja, nem kell megnyitnia semmit. Ez a kényelmesebb napi étlaphoz. |
+
+Képnél a rendszer a nagy fényképeket automatikusan 1600 pixel szélesre
+kicsinyíti – egy telefonnal készült fotó így is belefér a méretkorlátba.
+
+Fontos: a képet **csatolmányként** adja hozzá, ne a levél szövegébe
+illessze be. A szövegbe ágyazott képet sok levelezőprogram máshogy kezeli,
+és előfordulhat, hogy a rendszer nem találja meg.
 
 ## Miért nem kerül licencbe
 
@@ -140,7 +156,8 @@ Kulcs nélkül a `futar.php` 404-et ad, mintha nem is létezne.
 1. Nyisd meg az **admin → Diagnosztika** oldalt. Az étlap-futár sorainak
    zöldnek kell lenniük, köztük az „Időzítő (cron)" sornak.
 2. Iratkozz fel egy saját címmel a főoldalon.
-3. Küldj egy levelet PDF-fel az étlap-postafiókra egy jogosult címről.
+3. Küldj egy levelet PDF-fel vagy képpel az étlap-postafiókra egy jogosult
+   címről.
 4. Pár percen belül meg kell érkeznie az előnézetnek. Ebben kattints a
    **Mégsem** linkre – így ellenőrzöd a visszavonást anélkül, hogy bárkinek
    kimenne levél.
@@ -153,15 +170,19 @@ Kulcs nélkül a `futar.php` 404-et ad, mintha nem is létezne.
 | Nem jön előnézet | Diagnosztika → „Időzítő (cron)" sor. Ha „még soha", a cron nem fut. |
 | „Nem jogosult feladó" a naplóban | A beküldő címe nincs benne az `etlap_bekuldok` listában. |
 | HTTP 403 „Access is denied" | A hibaüzenet szögletes zárójelben megmondja, melyik művelet bukott el, és melyik jogosultság kell hozzá. Olvasottra állításnál ez `Mail.ReadWrite`. |
-| „Nem találtunk PDF-et" válasz | A csatolmány nem PDF, vagy beágyazott képként ment. |
+| „Nem találtunk étlapot" válasz | A csatolmány nem PDF/JPG/PNG, vagy a kép a levél szövegébe lett beillesztve csatolmány helyett. |
+| A kép nem látszik a levélben | A levelezőprogram alapból blokkolja a képeket. A címzettnek engedélyeznie kell a megjelenítést. |
 | A kiküldés félbemaradt | Nem baj: a következő futás onnan folytatja, ahol abbahagyta. Senki nem kap két példányt. |
 | Sok a hibás cím | Ezek jellemzően megszűnt postafiókok. A részletek a hibanaplóban. |
 
 ## Korlátok
 
-- **A PDF legfeljebb 3 MB** lehet. A Microsoft a levelet kb. 4 MB-ig fogadja,
-  és a csatolmány kódolása kb. harmadával növeli a méretet. Nagyobb PDF esetén
+- **A csatolmány legfeljebb 3 MB** lehet. A Microsoft a levelet kb. 4 MB-ig
+  fogadja, és a kódolás kb. harmadával növeli a méretet. Nagyobb fájl esetén
   a beküldő kap egy értesítést, és nem megy ki semmi.
+  Képnél ez ritkán gond: a rendszer előbb kicsinyít (ehhez a GD bővítmény kell
+  a tárhelyen – a Diagnosztika „Képek kicsinyítése" sora megmondja, megvan-e).
+  PDF-nél nincs kicsinyítés, ott a mentésnél kell kisebb méretet választani.
 - A kiküldés tempója szándékosan lassú (kb. másodpercenként egy fél levél),
   mert az Exchange Online percenként korlátozott számú levelet enged.
   Néhány száz címnél ez pár perc.

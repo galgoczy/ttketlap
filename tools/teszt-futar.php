@@ -201,6 +201,88 @@ allit(
 );
 
 // ---------------------------------------------------------------
+fejezet('Kép (JPG) étlapként');
+
+allit('a JPG képnek számít', kep_e('image/jpeg'));
+allit('a PNG is', kep_e('image/png'));
+allit('a PDF nem', !kep_e('application/pdf'));
+
+$kepKuldes = ['targy' => 'Mai étlap', 'bevezeto' => 'Jó étvágyat!', 'pdf_nev' => 'etlap.JPG'];
+$pdfKuldes = ['targy' => 'Mai étlap', 'bevezeto' => 'Jó étvágyat!', 'pdf_nev' => 'etlap.pdf'];
+
+allit('nagybetűs kiterjesztést is felismer', kuldes_kep_e($kepKuldes));
+allit('a típust a fájlnévből állapítja meg', kuldes_fajl_tipusa($kepKuldes) === 'image/jpeg',
+    kuldes_fajl_tipusa($kepKuldes));
+allit('PDF-nél nem kép', !kuldes_kep_e($pdfKuldes));
+
+$kepHtml = etlap_level_html($kepKuldes + ['pdf_tartalom' => 'x'], '#');
+allit('a képes levélben beágyazott kép van', str_contains($kepHtml, 'src="cid:etlap"'), '');
+allit('a képes levél NEM csatolmányra utal', !str_contains($kepHtml, 'csatolmányában'));
+
+$pdfHtml = etlap_level_html($pdfKuldes + ['pdf_tartalom' => 'x'], '#');
+allit('a PDF-es levél a csatolmányra utal', str_contains($pdfHtml, 'csatolmányában'));
+allit('a PDF-es levélben nincs beágyazott kép', !str_contains($pdfHtml, 'cid:etlap'));
+
+// ---------------------------------------------------------------
+fejezet('Nagy fénykép kicsinyítése');
+
+if (!function_exists('imagecreatetruecolor')) {
+    echo "  (kihagyva: nincs GD bővítmény)\n";
+} else {
+    // "Fenykep": 3000 pixel szeles, zajjal - hogy ne tomorodjon a semmibe.
+    $nagy = imagecreatetruecolor(3000, 2000);
+    for ($i = 0; $i < 4000; $i++) {
+        imagefilledrectangle($nagy, random_int(0, 2900), random_int(0, 1900),
+            random_int(0, 2999), random_int(0, 1999),
+            imagecolorallocate($nagy, random_int(0, 255), random_int(0, 255), random_int(0, 255)));
+    }
+    ob_start(); imagejpeg($nagy, null, 92); $nagyJpg = (string) ob_get_clean();
+    imagedestroy($nagy);
+
+    $kicsi = kep_kicsinyites($nagyJpg, 'image/jpeg');
+    $meret = imagecreatefromstring($kicsi);
+
+    allit('a kicsinyített kép még érvényes JPG', $meret !== false);
+    allit('a szélessége 1600 pixel', imagesx($meret) === 1600, (string) imagesx($meret));
+    allit('a fájl kisebb lett', strlen($kicsi) < strlen($nagyJpg),
+        meret_szoveg(strlen($nagyJpg)) . ' -> ' . meret_szoveg(strlen($kicsi)));
+    allit('belefér a levélbe (3 MB alatt)', strlen($kicsi) <= ETLAP_MAX_PDF,
+        meret_szoveg(strlen($kicsi)));
+
+    // Kis kepet ne bantsunk.
+    $kis = imagecreatetruecolor(800, 600);
+    ob_start(); imagejpeg($kis, null, 85); $kisJpg = (string) ob_get_clean();
+    imagedestroy($kis);
+    allit('a kis képhez nem nyúl', kep_kicsinyites($kisJpg, 'image/jpeg') === $kisJpg);
+
+    // Rossz adat ne dontse le a rendszert.
+    allit('sérült képnél az eredetit adja vissza',
+        kep_kicsinyites('ez nem kép', 'image/jpeg') === 'ez nem kép');
+
+    // ---------------------------------------------------------------
+    fejezet('A kész levél beágyazott képpel');
+
+    $kuldesTeljes = $kepKuldes + ['pdf_tartalom' => $kicsi];
+    $mailKep = build_message(
+        'vendeg@pelda.hu', 'Mai étlap',
+        etlap_level_html($kuldesTeljes, '#'),
+        etlap_level_szoveg($kuldesTeljes, '#'),
+        str_repeat('c', 64),
+        kuldes_csatolmanya($kuldesTeljes)
+    );
+    $mailKep->isSMTP();
+    $mailKep->preSend();
+    $mimeKep = $mailKep->getSentMIMEMessage();
+
+    allit('a kép beágyazva megy (Content-ID)', str_contains($mimeKep, 'Content-ID: <etlap>'), '');
+    allit('inline megjelenítéssel', str_contains($mimeKep, 'Content-Disposition: inline'));
+    allit('JPEG típussal', str_contains($mimeKep, 'image/jpeg'));
+    allit('a levél related szerkezetű', str_contains($mimeKep, 'multipart/related'));
+    allit('a szöveges változat is szól a képről',
+        str_contains(etlap_level_szoveg($kuldesTeljes, '#'), 'képként'));
+}
+
+// ---------------------------------------------------------------
 echo "\n";
 printf("Összesen: %d rendben, %d hiba\n", $GLOBALS['okk'], $GLOBALS['hibak']);
 exit($GLOBALS['hibak'] === 0 ? 0 : 1);

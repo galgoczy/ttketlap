@@ -187,3 +187,23 @@ function email_etlap(array $napok): string
     return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" '
          . 'style="margin:4px 0 8px 0">' . $sorok . '</table>';
 }
+
+/**
+ * Beagyazott kep a levelben (pl. fenykepezett vagy kepkent kuldott etlap).
+ *
+ * A kep a levelbe agyazva megy (cid:), nem kulso hivatkozaskent: igy a
+ * levelezoprogramok nem "kulso tartalomkent" kezelik, es nagyobb esellyel
+ * jelenitik meg azonnal.
+ *
+ * A width attributum az Outlook miatt kell (az a max-width-et nem erti),
+ * a max-width pedig a mobilok miatt, hogy ne logjon ki a kep.
+ */
+function email_kep(string $cid, string $alt = 'A mai étlap'): string
+{
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"'
+         . ' style="margin:0 0 16px 0"><tr><td align="center">'
+         . '<img src="cid:' . e($cid) . '" alt="' . e($alt) . '" width="544"'
+         . ' style="display:block;width:100%;max-width:544px;height:auto;border:0;'
+         . 'border-radius:4px" />'
+         . '</td></tr></table>';
+}

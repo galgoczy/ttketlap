@@ -98,14 +98,31 @@ function build_message(
         $mail->addCustomHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
     }
 
-    // Csatolmanyok. A tartalmat memoriabol adjuk at (addStringAttachment),
-    // mert a PDF az adatbazisban van, nem fajlkent a lemezen.
+    // Csatolmanyok. A tartalmat memoriabol adjuk at, mert a fajl az
+    // adatbazisban van, nem a lemezen.
+    //
+    // Ha van 'cid' kulcs, a fajl a level TORZSEBE agyazodik (kepeknel ez a
+    // jo: a cimzett rogton latja). Enelkul sima csatolmany lesz (PDF-nel ez
+    // a jo: azt ugysem lehet a levelben megjeleniteni).
     foreach ($csatolmanyok as $csatolmany) {
+        $tipus = $csatolmany['tipus'] ?? 'application/pdf';
+
+        if (!empty($csatolmany['cid'])) {
+            $mail->addStringEmbeddedImage(
+                $csatolmany['tartalom'],
+                $csatolmany['cid'],
+                $csatolmany['nev'],
+                PHPMailer::ENCODING_BASE64,
+                $tipus
+            );
+            continue;
+        }
+
         $mail->addStringAttachment(
             $csatolmany['tartalom'],
             $csatolmany['nev'],
             PHPMailer::ENCODING_BASE64,
-            $csatolmany['tipus'] ?? 'application/pdf'
+            $tipus
         );
     }
 
