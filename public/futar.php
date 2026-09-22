@@ -56,10 +56,16 @@ try {
     exit(1);
 }
 
+// Percenkent futo idozitonel a "nem volt teendo" kiiras karos lehet: ha a
+// tarhely emailben kuldi a cron kimenetet, az naponta 1440 levél. Ezert
+// parancssorban csak akkor szolunk, ha tortent valami - vagy ha kezzel,
+// a -v kapcsoloval inditjak.
+$beszedes = !$parancssor || in_array('-v', $argv ?? [], true);
+
 foreach ($naplo as $sor) {
     echo $sor, PHP_EOL;
 }
 
-if (!$naplo) {
+if (!$naplo && $beszedes) {
     echo 'Nem volt teendő.', PHP_EOL;
 }
