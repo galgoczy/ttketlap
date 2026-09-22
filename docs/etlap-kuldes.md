@@ -47,11 +47,17 @@ Az app registration eddig csak küldeni tudott. Most olvasnia is kell:
 
 Entra admin központ → **App registrations** → az alkalmazás → **API permissions**
 → **Add a permission** → Microsoft Graph → **Application permissions** →
-`Mail.Read` → majd **Grant admin consent**.
+**`Mail.ReadWrite`** → majd **Grant admin consent**.
+
+> **Miért `Mail.ReadWrite`, és miért nem elég a `Mail.Read`?**
+> A rendszer a feldolgozott levelet olvasottra állítja – ebből tudja, hogy
+> azzal már végzett. Ez írási művelet, amit a `Mail.Read` nem enged; azzal
+> a futár 403-as hibával áll meg. A `Mail.ReadWrite` magában foglalja az
+> olvasást is, tehát a `Mail.Read`-et nem kell külön felvenni.
 
 ### Érdemes szűkíteni
 
-Az alkalmazás-szintű `Mail.Send` és `Mail.Read` a tenant **összes** postafiókját
+Az alkalmazás-szintű `Mail.Send` és `Mail.ReadWrite` a tenant **összes** postafiókját
 eléri. Érdemes ezt a két címre korlátozni egy hozzáférési szabállyal
 (Exchange Online PowerShell):
 
@@ -146,6 +152,7 @@ Kulcs nélkül a `futar.php` 404-et ad, mintha nem is létezne.
 |---|---|
 | Nem jön előnézet | Diagnosztika → „Időzítő (cron)" sor. Ha „még soha", a cron nem fut. |
 | „Nem jogosult feladó" a naplóban | A beküldő címe nincs benne az `etlap_bekuldok` listában. |
+| HTTP 403 „Access is denied" | A hibaüzenet szögletes zárójelben megmondja, melyik művelet bukott el, és melyik jogosultság kell hozzá. Olvasottra állításnál ez `Mail.ReadWrite`. |
 | „Nem találtunk PDF-et" válasz | A csatolmány nem PDF, vagy beágyazott képként ment. |
 | A kiküldés félbemaradt | Nem baj: a következő futás onnan folytatja, ahol abbahagyta. Senki nem kap két példányt. |
 | Sok a hibás cím | Ezek jellemzően megszűnt postafiókok. A részletek a hibanaplóban. |

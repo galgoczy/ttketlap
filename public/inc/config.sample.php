@@ -53,6 +53,9 @@ return [
     //   graph_client_secret = a Certificates & secrets alatt letrehozott ertek
     // Az alkalmazasnak Mail.Send APPLICATION jogosultsag kell,
     // rendszergazdai jovahagyassal. Lasd: docs/levelkuldes.md
+    // Ha az automatikus etlapkuldest is hasznalod, kell melle
+    // Mail.ReadWrite is (a Mail.Read keves: a feldolgozott levelet a
+    // rendszer olvasottra allitja, az pedig iras). Lasd: docs/etlap-kuldes.md
     'graph_tenant_id'     => '',
     'graph_client_id'     => '',
     'graph_client_secret' => '',

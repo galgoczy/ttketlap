@@ -127,7 +127,11 @@ function beerkezett_feldolgozas(): array
 
     // A Prefer fejleccel a level torzset sima szovegkent kerjuk, igy nem
     // kell HTML-t bontogatnunk.
-    $valasz = graph_get($url, ['Prefer: outlook.body-content-type="text"']);
+    $valasz = graph_get(
+        $url,
+        ['Prefer: outlook.body-content-type="text"'],
+        'a postafiók olvasása'
+    );
     $uzenetek = $valasz['value'] ?? [];
 
     if (!$uzenetek) {
@@ -277,7 +281,8 @@ function uzenet_olvasott(string $mailbox, string $id): void
 {
     graph_patch(
         graph_mailbox_url($mailbox, 'messages/' . rawurlencode($id)),
-        ['isRead' => true]
+        ['isRead' => true],
+        'a levél olvasottra állítása'
     );
 }
 
@@ -289,7 +294,7 @@ function uzenet_olvasott(string $mailbox, string $id): void
 function pdf_csatolmany(string $mailbox, string $uzenetId): ?array
 {
     $url = graph_mailbox_url($mailbox, 'messages/' . rawurlencode($uzenetId) . '/attachments');
-    $valasz = graph_get($url);
+    $valasz = graph_get($url, [], 'a csatolmány letöltése');
 
     foreach ($valasz['value'] ?? [] as $csatolmany) {
         $nev   = (string) ($csatolmany['name'] ?? '');

@@ -225,6 +225,43 @@ ellenoriz('Étlap postafiók', function () {
     return ['ok', $mailbox];
 });
 
+// Eles proba: tenyleg el tudja-e erni a rendszer a postafiokot? Ez tobbet
+// er minden beallitas-ellenorzesnel, mert a valodi valaszt mutatja.
+ellenoriz('Étlap postafiók elérése', function () {
+    $mailbox = cfg('etlap_mailbox');
+    if ($mailbox === '') {
+        return ['figyelem', 'Nincs beállítva étlap-postafiók, nincs mit ellenőrizni.'];
+    }
+
+    // Olvasas: ehhez Mail.Read is eleg.
+    $url = graph_mailbox_url($mailbox, 'mailFolders/inbox/messages') . '?$top=1&$select=id';
+    $valasz = graph_get($url, [], 'a postafiók olvasása');
+
+    // Iras: a feldolgozott levelet olvasottra kell allitani. Ez a lepes
+    // bukik el Mail.Read eseten, ezert kulon is kiprobaljuk - ugy, hogy
+    // nem valtoztatunk semmit (a level sajat isRead erteket irjuk vissza).
+    $elso = $valasz['value'][0] ?? null;
+    if ($elso === null) {
+        return ['ok', 'Az olvasás működik. A postafiók üres, ezért az írást most '
+                    . 'nem tudtuk kipróbálni.'];
+    }
+
+    $reszletes = graph_get(
+        graph_mailbox_url($mailbox, 'messages/' . rawurlencode((string) $elso['id']))
+            . '?$select=id,isRead',
+        [],
+        'a postafiók olvasása'
+    );
+
+    graph_patch(
+        graph_mailbox_url($mailbox, 'messages/' . rawurlencode((string) $elso['id'])),
+        ['isRead' => (bool) ($reszletes['isRead'] ?? false)],
+        'a levél olvasottra állítása'
+    );
+
+    return ['ok', 'Az olvasás és az írás is működik.'];
+});
+
 ellenoriz('Beküldésre jogosultak', function () {
     $cimek = etlap_bekuldok();
     if (!$cimek) {

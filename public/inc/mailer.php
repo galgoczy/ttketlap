@@ -155,7 +155,7 @@ function graph_send(PHPMailer $mail): void
     $mailbox = cfg('mail_from');
     $url = 'https://graph.microsoft.com/v1.0/users/' . rawurlencode($mailbox) . '/sendMail';
 
-    graph_request($url, base64_encode($mime), 'text/plain', graph_token());
+    graph_request($url, base64_encode($mime), 'text/plain', graph_token(), 'levélküldés');
 }
 
 /** A Graph felhasznaloi (postafiok) vegpontjanak kezdete. */
@@ -171,9 +171,9 @@ function graph_mailbox_url(string $mailbox, string $ut): string
  * @param array<int,string> $extraHeaders
  * @return array<string,mixed>
  */
-function graph_get(string $url, array $extraHeaders = []): array
+function graph_get(string $url, array $extraHeaders = [], string $muvelet = ''): array
 {
-    $valasz = graph_http('GET', $url, graph_token(), '', '', $extraHeaders);
+    $valasz = graph_http('GET', $url, graph_token(), '', '', $extraHeaders, $muvelet);
     $adat   = json_decode($valasz, true);
 
     if (!is_array($adat)) {
@@ -184,14 +184,16 @@ function graph_get(string $url, array $extraHeaders = []): array
 }
 
 /** Egy level modositasa (nalunk: olvasottra allitas). */
-function graph_patch(string $url, array $adat): void
+function graph_patch(string $url, array $adat, string $muvelet = ''): void
 {
     graph_http(
         'PATCH',
         $url,
         graph_token(),
         (string) json_encode($adat, JSON_UNESCAPED_UNICODE),
-        'application/json'
+        'application/json',
+        [],
+        $muvelet
     );
 }
 
@@ -250,9 +252,14 @@ class GraphLassitsException extends RuntimeException
  * Egy HTTPS POST keres. Hiba eseten beszedes kivetelt dob,
  * hogy az admin teszt gombja hasznalhato uzenetet tudjon mutatni.
  */
-function graph_request(string $url, string $body, string $contentType, string $token = ''): string
-{
-    return graph_http('POST', $url, $token, $body, $contentType);
+function graph_request(
+    string $url,
+    string $body,
+    string $contentType,
+    string $token = '',
+    string $muvelet = ''
+): string {
+    return graph_http('POST', $url, $token, $body, $contentType, [], $muvelet);
 }
 
 /**
@@ -267,7 +274,8 @@ function graph_http(
     string $token = '',
     string $body = '',
     string $contentType = '',
-    array $extraHeaders = []
+    array $extraHeaders = [],
+    string $muvelet = ''
 ): string {
     if (!function_exists('curl_init')) {
         throw new RuntimeException('A PHP cURL bővítmény nem érhető el a tárhelyen.');
@@ -321,14 +329,14 @@ function graph_http(
 
     // A sikeres sendMail 202-vel valaszol, ures torzzsel.
     if ($status < 200 || $status >= 300) {
-        throw new RuntimeException(graph_error_message($status, $torzs));
+        throw new RuntimeException(graph_error_message($status, $torzs, $muvelet));
     }
 
     return $torzs;
 }
 
 /** A Microsoft hibavalaszabol olvashato uzenetet keszit. */
-function graph_error_message(int $status, string $response): string
+function graph_error_message(int $status, string $response, string $muvelet = ''): string
 {
     $data = json_decode($response, true);
 
@@ -345,12 +353,38 @@ function graph_error_message(int $status, string $response): string
         str_contains($detail, 'AADSTS7000215') => ' (Hibás vagy lejárt client secret.)',
         str_contains($detail, 'AADSTS700016') => ' (Ismeretlen client ID – ellenőrizd az alkalmazás azonosítóját.)',
         str_contains($detail, 'AADSTS90002')  => ' (Ismeretlen tenant ID.)',
-        $status === 403                        => ' (Hiányzik a Mail.Send jogosultság, vagy nincs rá rendszergazdai jóváhagyás.)',
-        $status === 404                        => ' (Nincs ilyen postafiók – a mail_from cím nem létezik a tenantban.)',
+        $status === 403                        => jogosultsag_tipp($muvelet),
+        $status === 404                        => ' (Nincs ilyen postafiók – ellenőrizd a címet a beállításokban.)',
         default                                => '',
     };
 
-    return 'Microsoft hiba (HTTP ' . $status . '): ' . $detail . $hint;
+    $hol = $muvelet !== '' ? ' [' . $muvelet . ']' : '';
+
+    return 'Microsoft hiba (HTTP ' . $status . ')' . $hol . ': ' . $detail . $hint;
+}
+
+/**
+ * 403-nal az szamit, MELYIK muvelet bukott el: mindegyikhez mas
+ * jogosultsag tartozik. A korabbi valasz mindig a Mail.Send-et emlegette,
+ * ami felrevezeto volt.
+ */
+function jogosultsag_tipp(string $muvelet): string
+{
+    [$kell, $megjegyzes] = match ($muvelet) {
+        'levélküldés' => ['Mail.Send', ''],
+        'a postafiók olvasása',
+        'a csatolmány letöltése' => ['Mail.ReadWrite (vagy legalább Mail.Read)', ''],
+        'a levél olvasottra állítása' => [
+            'Mail.ReadWrite',
+            ' A Mail.Read ehhez kevés: az csak olvasni enged, írni nem.',
+        ],
+        default => ['Mail.Send és Mail.ReadWrite', ''],
+    };
+
+    return ' (Ehhez a művelethez ' . $kell . ' ALKALMAZÁS-jogosultság kell, '
+         . 'rendszergazdai jóváhagyással.' . $megjegyzes
+         . ' Ha a jóváhagyás megvan, akkor vagy maga a jogosultság hiányzik, vagy egy '
+         . 'hozzáférési szabály (ApplicationAccessPolicy) zárja ki ezt a postafiókot.)';
 }
 
 /**
