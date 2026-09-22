@@ -105,11 +105,20 @@ Hostinger hPanel → **Speciális** → **Cron-feladatok**.
 - Parancs:
 
 ```
-/usr/bin/php /home/<a te felhasználód>/public_html/futar.php
+/usr/bin/php <a weboldal mappája>/futar.php
 ```
 
-A pontos elérési utat a Fájlkezelőben látod. **Így a futár kívülről egyáltalán
-nem érhető el** – ez a biztonságos megoldás.
+**A pontos útvonalat ne találgasd:** a weboldal mappája nem feltétlenül
+`public_html`. Aldomainnél a Hostingeren jellemzően
+`domains/<a domain>/public_html`, és a Fájlkezelő ezt is csak
+„public_html" néven mutatja.
+
+Nyisd meg az **admin → Diagnosztika** oldalt: az **„Az időzítő (cron)
+parancsa"** sor kiírja a teljes parancsot, és azt is, mi kerül pontosan
+a Hostinger mezőjébe (az űrlap a `/usr/bin/php /home/<felhasználó>/`
+részt magától beírja).
+
+**Így a futár kívülről egyáltalán nem érhető el** – ez a biztonságos megoldás.
 
 Ha a tárhely csak webcímes időzítést enged, akkor adj meg egy `cron_kulcs`
 értéket (`openssl rand -hex 24`), és ezt a címet időzítsd:

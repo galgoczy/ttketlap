@@ -242,6 +242,28 @@ ellenoriz('Visszavonási idő', function () {
     return ['ok', $perc . ' perc'];
 });
 
+ellenoriz('Az időzítő (cron) parancsa', function () {
+    // A tarhelyen a weboldal mappaja nem feltetlenul "public_html" -
+    // aldomainnel jellemzoen nem az. Ezert nem talalgatunk: kiirjuk a
+    // valodi utvonalat, ahogy a szerver latja.
+    $teljes = dirname(__DIR__) . '/futar.php';
+
+    if (!is_file($teljes)) {
+        return ['hiba', 'A futar.php nincs a helyén: ' . $teljes
+                      . '. Úgy tűnik, a feltöltés nem fejeződött be.'];
+    }
+
+    $uzenet = 'Teljes parancs: /usr/bin/php ' . $teljes;
+
+    // A Hostinger urlapja a "/usr/bin/php /home/<felhasznalo>/" reszt
+    // elore beirja, es csak a maradekot kell begepelni.
+    if (preg_match('#^/home/[^/]+/(.+)$#', $teljes, $talalat)) {
+        $uzenet .= ' — a Hostinger mezőjébe ez kerül: ' . $talalat[1];
+    }
+
+    return ['ok', $uzenet];
+});
+
 ellenoriz('Időzítő (cron)', function () {
     $utolso = allapot_olvas('futar_utolso_futas');
     if ($utolso === null) {
