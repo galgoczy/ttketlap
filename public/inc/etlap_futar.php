@@ -59,9 +59,10 @@ function futar_fut(): array
         foreach (['beerkezett_feldolgozas', 'kuldesek_inditasa', 'kuldes_folytatasa'] as $lepes) {
             try {
                 $naplo = array_merge($naplo, $lepes());
+                hiba_megszunt($lepes, lepes_helyreallt($lepes));
             } catch (Throwable $hiba) {
                 error_log(sprintf('Etlap futar - %s: %s', $lepes, $hiba->getMessage()));
-                $naplo[] = esemeny('hiba', lepes_neve($lepes) . ': ' . $hiba->getMessage());
+                $naplo[] = ismetlodo_hiba($lepes, lepes_neve($lepes) . ': ' . $hiba->getMessage());
             }
         }
     } finally {
@@ -73,6 +74,18 @@ function futar_fut(): array
     naplo_takaritas();
 
     return $naplo;
+}
+
+/** A helyreallas emberi szovege. */
+function lepes_helyreallt(string $kulcs): string
+{
+    return match ($kulcs) {
+        'beerkezett_feldolgozas' => 'A postafiók ellenőrzése újra működik.',
+        'kuldesek_inditasa'      => 'A kiküldések indítása újra működik.',
+        'kuldes_folytatasa'      => 'A kiküldés újra halad.',
+        'uzenet'                 => 'A beérkezett levelek feldolgozása újra működik.',
+        default                  => 'A korábbi hiba megszűnt.',
+    };
 }
 
 /** A lepesek emberi neve a naplohoz. */
@@ -151,13 +164,24 @@ function beerkezett_feldolgozas(): array
         return $naplo;
     }
 
+    $uzenetHiba = false;
+
     foreach ($uzenetek as $uzenet) {
         try {
             $naplo[] = uzenet_feldolgozas($mailbox, $uzenet);
         } catch (Throwable $hiba) {
             error_log('Etlap futar - uzenet hiba: ' . $hiba->getMessage());
-            $naplo[] = esemeny('hiba', 'Hiba egy levél feldolgozásakor: ' . $hiba->getMessage());
+            // Ha egy levelet nem sikerul feldolgozni, az olvasatlan marad,
+            // es a kovetkezo futas ujra probalja - vagyis a hiba percenkent
+            // ismetlodne. Ezert ugyanugy szurjuk, mint a lepeshibakat.
+            $naplo[] = ismetlodo_hiba('uzenet', 'Hiba egy levél feldolgozásakor: ' . $hiba->getMessage());
+            $uzenetHiba = true;
         }
+    }
+
+    // Ha most minden level rendben ment, egy korabbi hiba megszunt.
+    if (!$uzenetHiba) {
+        hiba_megszunt('uzenet', lepes_helyreallt('uzenet'));
     }
 
     return $naplo;
@@ -184,7 +208,7 @@ function uzenet_feldolgozas(string $mailbox, array $uzenet): string
     // kizarjuk azt az esetet, amikor a postafiok onmagatol kap levelet.
     if ($felado === mb_strtolower($mailbox) || sajat_levelunk($uzenet)) {
         uzenet_olvasott($mailbox, $id);
-        return esemeny('info', 'Saját levelünk került vissza a postafiókba, kihagyva.');
+        return esemeny('info', 'Saját levelünk került vissza a postafiókba, kihagyva.', null, false);
     }
 
     if (!in_array($felado, etlap_bekuldok(), true)) {
@@ -193,7 +217,7 @@ function uzenet_feldolgozas(string $mailbox, array $uzenet): string
         // hamisithato, es a valasz egy artatlan emberhez jutna el.
         return esemeny('figyelem', sprintf(
             'Levél érkezett nem jogosult feladótól (%s) – nem dolgoztuk fel. '
-            . 'Ha ez a cím is küldhet étlapot, vedd fel az etlap_bekuldok közé.',
+            . 'Ha ez a cím is küldhet étlapot, vegye fel az etlap_bekuldok közé.',
             $felado !== '' ? $felado : 'ismeretlen'
         ));
     }
@@ -262,7 +286,7 @@ function uzenet_feldolgozas(string $mailbox, array $uzenet): string
 
     if ($stmt->rowCount() === 0) {
         uzenet_olvasott($mailbox, $id);
-        return esemeny('info', 'Egy korábban már feldolgozott levél újra előkerült, kihagyva.');
+        return esemeny('info', 'Egy korábban már feldolgozott levél újra előkerült, kihagyva.', null, false);
     }
 
     $kuldesId = (int) db()->lastInsertId();
@@ -863,12 +887,14 @@ function kuldes_folytatasa(): array
         }
     }
 
+    // A haladasrol percenkent szolna - Telegramra ezert nem megy, csak
+    // az indulas es a befejezes.
     return [esemeny('info', sprintf(
         'Kiküldés folyamatban: „%s" – eddig %d levél ment el%s. A következő futás folytatja.',
         $kuldes['targy'],
         (int) $kuldes['kikuldve'],
         (int) $kuldes['hibas'] > 0 ? ', ' . (int) $kuldes['hibas'] . ' nem sikerült' : ''
-    ), $kuldesId)];
+    ), $kuldesId, false)];
 }
 
 /**
@@ -901,14 +927,16 @@ function egy_cimzettnek(array $kuldes, array $cimzett): bool
             esemeny('figyelem', sprintf(
                 'A Microsoft lassításra kért, %d másodpercet várunk (ez nem hiba).',
                 $lassits->varakozas
-            ), (int) $kuldes['id']);
+            ), (int) $kuldes['id'], false);
             sleep($lassits->varakozas);
         } catch (Throwable $hiba) {
+            // Telegramra nem kuldjuk egyenkent: sok rossz cimnel elarasztana,
+            // es a zaro osszegzes ugyis megmondja, hany nem ment el.
             esemeny('hiba', sprintf(
                 'Nem ment el %s címre: %s',
                 $cimzett['email'],
                 $hiba->getMessage()
-            ), (int) $kuldes['id']);
+            ), (int) $kuldes['id'], false);
 
             return false;
         }
@@ -917,7 +945,7 @@ function egy_cimzettnek(array $kuldes, array $cimzett): bool
     esemeny('hiba', sprintf(
         'Nem ment el %s címre: a Microsoft háromszor is lassításra kért, kihagytuk.',
         $cimzett['email']
-    ), (int) $kuldes['id']);
+    ), (int) $kuldes['id'], false);
 
     return false;
 }

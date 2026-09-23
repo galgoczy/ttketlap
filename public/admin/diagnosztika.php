@@ -4,6 +4,7 @@ declare(strict_types=1);
 require __DIR__ . '/auth.php';
 require __DIR__ . '/../inc/etlap_futar.php';
 require_once __DIR__ . '/../inc/naplo.php';
+require_once __DIR__ . '/../inc/telegram.php';
 require_admin();
 
 /**
@@ -22,15 +23,15 @@ $eredmenyek = [];
 function erthetobb_hiba(string $uzenet): string
 {
     $magyarazat = match (true) {
-        str_contains($uzenet, '[2002]')  => 'Nem érhető el az adatbázis szerver. Ellenőrizd a db_host értékét a config.php-ban (a Hostingeren általában "localhost").',
+        str_contains($uzenet, '[2002]')  => 'Nem érhető el az adatbázis szerver. Ellenőrizze a db_host értékét a config.php-ban (a Hostingeren általában "localhost").',
         str_contains($uzenet, '[1045]')  => 'A MySQL elutasította a belépést. Három dolgot érdemes megnézni: '
             . '(1) a db_host értéke a Hostingeren "localhost" legyen – ha IP-cím vagy külső név van ott, '
             . 'a MySQL nem ismeri fel a jogosultságot; '
             . '(2) a db_user és db_pass pontosan egyezzen a hPanelben látottal; '
             . '(3) a config.php-ban a jelszó APOSZTRÓFOK között legyen, ne idézőjelben – '
             . 'idézőjelben a $ jel után álló részt a PHP változónak veszi és eltünteti.',
-        str_contains($uzenet, '[1049]')  => 'Nincs ilyen nevű adatbázis (db_name). Ellenőrizd a hPanelben a pontos nevet.',
-        str_contains($uzenet, '[1146]')  => 'Hiányzik egy tábla. Futtasd le a sql/schema.sql fájlt phpMyAdminban.',
+        str_contains($uzenet, '[1049]')  => 'Nincs ilyen nevű adatbázis (db_name). Ellenőrizze a hPanelben a pontos nevet.',
+        str_contains($uzenet, '[1146]')  => 'Hiányzik egy tábla. Futtassa le a sql/schema.sql fájlt phpMyAdminban.',
         str_contains($uzenet, '[1044]')  => 'A felhasználónak nincs joga ehhez az adatbázishoz.',
         default => '',
     };
@@ -60,7 +61,7 @@ ellenoriz('PHP verzió', fn() => [
 
 ellenoriz('MySQL bővítmény (PDO)', fn() => extension_loaded('pdo_mysql')
     ? ['ok', 'elérhető']
-    : ['hiba', 'A pdo_mysql bővítmény hiányzik. A hPanelben állítsd be a PHP verziót.']);
+    : ['hiba', 'A pdo_mysql bővítmény hiányzik. A hPanelben állítsa be a PHP verziót.']);
 
 ellenoriz('cURL bővítmény', fn() => extension_loaded('curl')
     ? ['ok', 'elérhető (a Graph API-s levélküldéshez kell)']
@@ -76,7 +77,7 @@ ellenoriz('`subscribers` tábla', function () {
     $db = db();  // ha a kapcsolat nem el, a fenti sor mar jelezte
     $van = $db->query("SHOW TABLES LIKE 'subscribers'")->fetch();
     if (!$van) {
-        return ['hiba', 'Nincs meg. Futtasd le a sql/schema.sql fájlt phpMyAdminban.'];
+        return ['hiba', 'Nincs meg. Futtassa le a sql/schema.sql fájlt phpMyAdminban.'];
     }
     $n = (int) $db->query('SELECT COUNT(*) FROM subscribers')->fetchColumn();
     return ['ok', $n . ' sor'];
@@ -87,7 +88,7 @@ ellenoriz('`signup_attempts` tábla', function () {
     return $van
         ? ['ok', 'megvan']
         : ['hiba', 'Nincs meg. Enélkül a feliratkozás "Technikai hiba" üzenettel elszáll. '
-                 . 'Futtasd le a sql/schema.sql fájl MÁSODIK táblájának létrehozását is.'];
+                 . 'Futtassa le a sql/schema.sql fájl MÁSODIK táblájának létrehozását is.'];
 });
 
 ellenoriz('Adatbázis beállítások', function () {
@@ -155,7 +156,7 @@ ellenoriz('Admin jelszó', function () {
     $v = cfg('admin_password_hash');
     return str_starts_with($v, '$2y$') || str_starts_with($v, '$2b$') || str_starts_with($v, '$2a$')
         ? ['ok', 'érvényes bcrypt hash']
-        : ['hiba', 'Nem bcrypt hash. Generálj újat a tools/jelszo-hash.html fájllal.'];
+        : ['hiba', 'Nem bcrypt hash. Generáljon újat a tools/jelszo-hash.html fájllal.'];
 });
 
 ellenoriz('Adatkezelési verzió', fn() => cfg('consent_version') !== ''
@@ -204,7 +205,7 @@ ellenoriz('`etlap_kuldes` tábla', function () {
     return $van
         ? ['ok', 'megvan']
         : ['hiba', 'Nincs meg. Enélkül a beküldött étlapok nem mennek ki. '
-                 . 'Futtasd le a sql/etlap-kuldes.sql fájlt a phpMyAdminban.'];
+                 . 'Futtassa le a sql/etlap-kuldes.sql fájlt a phpMyAdminban.'];
 });
 
 ellenoriz('Napló', function () {
@@ -219,17 +220,38 @@ ellenoriz('Napló', function () {
 
     if ($hibak > 0) {
         return ['figyelem', sprintf('%d bejegyzés, ebből %d hiba az elmúlt napban. '
-                                  . 'Nézd meg a Napló oldalt.', $n, $hibak)];
+                                  . 'Nézze meg a Napló oldalt.', $n, $hibak)];
     }
 
     return ['ok', $n . ' bejegyzés, az elmúlt napban hiba nem volt'];
+});
+
+ellenoriz('Telegram értesítés', function () {
+    $token = cfg('telegram_bot_token');
+    $chat  = cfg('telegram_chat_id');
+
+    if ($token === '' && $chat === '') {
+        return ['figyelem', 'Nincs beállítva – eseményekről nem jön értesítés.'];
+    }
+    if ($token === '' || $chat === '') {
+        return ['hiba', 'Csak az egyik van kitöltve (telegram_bot_token / telegram_chat_id). '
+                      . 'Mindkettő kell.'];
+    }
+    // A token formaja: szamok, kettospont, majd legalabb 30 karakter.
+    if (!preg_match('/^\d+:[A-Za-z0-9_-]{30,}$/', $token)) {
+        return ['hiba', 'A bot token formátuma nem stimmel. Ellenőrizze, hogy a teljes '
+                      . 'tokent másolta-e be, szóköz nélkül.'];
+    }
+
+    // A tokent sosem irjuk ki, csak a chat azonositot.
+    return ['ok', 'beállítva (chat: ' . $chat . '). Kipróbálni a Napló oldalon lehet.'];
 });
 
 ellenoriz('`rendszer_allapot` tábla', function () {
     $van = db()->query("SHOW TABLES LIKE 'rendszer_allapot'")->fetch();
     return $van
         ? ['ok', 'megvan']
-        : ['hiba', 'Nincs meg. Futtasd le a sql/etlap-kuldes.sql fájlt a phpMyAdminban.'];
+        : ['hiba', 'Nincs meg. Futtassa le a sql/etlap-kuldes.sql fájlt a phpMyAdminban.'];
 });
 
 ellenoriz('Étlap postafiók', function () {
@@ -427,7 +449,7 @@ render_header('Diagnosztika', true, true);
         <div class="card empty">
             A hibanapló nem olvasható innen<?= $naploUt !== '' ? '' : ' (nincs beállítva útvonal)' ?>.
             A Hostinger hPanelben: <strong>Speciális → PHP-konfiguráció</strong>, illetve a
-            Fájlkezelőben keresd az <code>error_log</code> fájlt a weboldal mappájában.
+            Fájlkezelőben keresse az <code>error_log</code> fájlt a weboldal mappájában.
         </div>
     <?php endif; ?>
 

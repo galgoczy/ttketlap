@@ -176,6 +176,7 @@ Kulcs nélkül a `futar.php` 404-et ad, mintha nem is létezne.
 | A kiküldés félbemaradt | Nem baj: a következő futás onnan folytatja, ahol abbahagyta. Senki nem kap két példányt. |
 | Sok a hibás cím | Ezek jellemzően megszűnt postafiókok. A Napló oldalon címenként látszik, mi volt a gond. |
 | Nem tudod, mi történt | **Admin → Napló.** Szűrhető „Csak a problémák"-ra, és egy-egy kiküldés eseményeire. |
+| Nem jön Telegram-üzenet | **Admin → Napló → Teszt üzenet küldése.** Megmondja, mi a baj. A Diagnosztika is ellenőrzi a token formátumát. |
 
 ## A napló
 
@@ -190,6 +191,50 @@ hiba – emberi nyelven, címzett szintig.
 - A bejegyzések 60 napig maradnak meg, utána maguktól törlődnek.
 - A naplótáblát a rendszer magától létrehozza, nem kell hozzá phpMyAdmin.
 - Ha a napló írása valamiért nem sikerül, a kiküldés attól még megy tovább.
+
+## Telegram értesítés
+
+Ha történik valami, a rendszer egy összefoglaló üzenetet küld Telegramra.
+
+### Beállítás
+
+A `config.php`-ba (a szerveren – **soha ne a GitHubra, és ne chatbe**):
+
+```php
+'telegram_bot_token' => '123456789:AAH...',   // a @BotFather adja
+'telegram_chat_id'   => '123456789',          // csoportnál negatív szám
+```
+
+Ha még nincs meg a chat azonosító: írj egy üzenetet a botnak (csoportnál:
+add hozzá a botot, és írj a csoportba), majd nyisd meg böngészőben:
+
+```
+https://api.telegram.org/bot<A TOKEN>/getUpdates
+```
+
+A válaszban a `"chat":{"id": ...}` szám kell.
+
+Kipróbálni: **admin → Napló → Teszt üzenet küldése.** Ha nem megy, a gomb
+magyarul megmondja, mi a baj (rossz token, ismeretlen chat stb.).
+
+### Miről szól, és miről nem
+
+| Szól | Nem szól |
+|---|---|
+| Új étlap érkezett, előnézet elment | A kiküldés percenkénti haladása |
+| Indul a kiküldés | Címzettenkénti hibák (a záró összegzés megszámolja őket) |
+| Befejeződött (hány címre ment) | A Microsoft „lassíts" kérése (az nem hiba) |
+| Visszavonás | Saját, visszapattant levél |
+| Bármilyen hiba, és ha megjavult | |
+
+- **Egy futás = egy üzenet.** Ami egy percben történik, egy üzenetbe kerül.
+- **Ugyanaz a hiba csak egyszer szól.** Ha például hiányzik egy jogosultság,
+  a hiba percenként megismétlődne – ez naponta 1440 üzenet lenne. Ehelyett
+  egyszer szól, 6 óra múlva emlékeztet, ha még fennáll, és külön szól,
+  amikor megjavult.
+- **Leállt adatbázisnál is szól.** Az ismétlődés-szűrő fájlban tárolja az
+  állapotát, nem az adatbázisban – így pont a legsúlyosabb esetben is működik.
+- Ha a Telegram nem elérhető, a kiküldés attól még megy tovább.
 
 ## Korlátok
 

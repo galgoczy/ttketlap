@@ -149,7 +149,7 @@ render_header('Feliratkozók', true, true);
             <span class="alert__icon" aria-hidden="true">!</span>
             <span>
                 <strong>Az adatbázis nem érhető el.</strong><br>
-                Emiatt a lista és a darabszámok üresek. Nyisd meg a
+                Emiatt a lista és a darabszámok üresek. Nyissa meg a
                 <a href="/admin/diagnosztika.php">diagnosztika oldalt</a> – az pontosan
                 megmondja, mi hiányzik.<br>
                 <span class="text-xs"><?= e($dbHiba) ?></span>

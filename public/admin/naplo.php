@@ -11,6 +11,24 @@ require_admin();
  * Szurni lehet a problemakra, es egy adott kikuldes esemenyeire.
  */
 
+// Telegram teszt uzenet.
+$tgUzenet = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['telegram_teszt'])) {
+    if (!csrf_valid($_POST['csrf_token'] ?? null)) {
+        $tgUzenet = 'error:Az űrlap érvényessége lejárt, próbálja újra.';
+    } else {
+        $tgHiba = null;
+        $siker = telegram_kuldes(
+            "✅ <b>TTK Kantin étlap</b>\n\nEz egy teszt üzenet az admin felületről. "
+            . 'Ha ezt látja, az értesítés működik.',
+            $tgHiba
+        );
+        $tgUzenet = $siker
+            ? 'success:A teszt üzenet elment. Nézze meg a Telegramot.'
+            : 'error:' . ($tgHiba ?? 'Ismeretlen hiba.');
+    }
+}
+
 $csakGond = ($_GET['szuro'] ?? '') === 'gond';
 $kuldesId = (int) ($_GET['kuldes'] ?? 0);
 
@@ -72,6 +90,14 @@ render_header('Napló', true, true);
         kerülnek ide: beérkezett étlap, előnézet, kiküldés, visszavonás és hiba.
         A bejegyzések <?= NAPLO_MEGORZES_NAP ?> napig maradnak meg.
     </p>
+
+    <?php if ($tgUzenet !== ''): ?>
+        <?php [$tgTipus, $tgSzoveg] = explode(':', $tgUzenet, 2); ?>
+        <div class="alert alert--<?= $tgTipus === 'success' ? 'success' : 'error' ?>" role="alert">
+            <span class="alert__icon" aria-hidden="true"><?= $tgTipus === 'success' ? '&#10003;' : '!' ?></span>
+            <span><?= e($tgSzoveg) ?></span>
+        </div>
+    <?php endif; ?>
 
     <?php if ($hiba !== ''): ?>
         <div class="alert alert--error" role="alert">
@@ -145,6 +171,27 @@ render_header('Napló', true, true);
             </table>
         </div>
     <?php endif; ?>
+
+    <div class="card mt-6">
+        <p class="eyebrow">Telegram értesítés</p>
+        <?php if (telegram_beallitva()): ?>
+            <p class="subtitle">
+                Be van kapcsolva. Ha történik valami – új étlap, kiküldés, visszavonás
+                vagy hiba –, a rendszer egy összefoglaló üzenetet küld. A rutinszerű
+                eseményekről (pl. a kiküldés percenkénti haladása) nem szól.
+            </p>
+            <form method="post" action="/admin/naplo.php" class="inline-form">
+                <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
+                <button class="btn btn--secondary btn--small btn--inline" type="submit"
+                        name="telegram_teszt" value="1">Teszt üzenet küldése</button>
+            </form>
+        <?php else: ?>
+            <p class="subtitle m-0">
+                Nincs beállítva. A config.php-ban a <code>telegram_bot_token</code> és a
+                <code>telegram_chat_id</code> kitöltésével kapcsolható be.
+            </p>
+        <?php endif; ?>
+    </div>
 
     <div class="toolbar mt-6">
         <a class="btn btn--secondary btn--small" href="/admin/">Vissza a feliratkozókhoz</a>

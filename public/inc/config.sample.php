@@ -104,4 +104,14 @@ return [
     // futar.php webrol egyaltalan nem erheto el). Generalas:
     //   openssl rand -hex 24
     'cron_kulcs' => '',
+
+    // --- Telegram ertesites ---
+    // Ha tortenik valami (uj etlap, kikuldes, hiba), a rendszer egy
+    // osszefoglalo uzenetet kuld. Ha barmelyik ures, nincs ertesites.
+    // A tokent a @BotFather adja; SOHA ne tedd GitHubra vagy chatbe.
+    // A chat azonosito: irj egy uzenetet a botnak, majd nyisd meg a
+    //   https://api.telegram.org/bot<TOKEN>/getUpdates
+    // cimet - a "chat":{"id": ...} ertek kell. Csoportnal negativ szam.
+    'telegram_bot_token' => '',
+    'telegram_chat_id'   => '',
 ];

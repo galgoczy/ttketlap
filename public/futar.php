@@ -45,8 +45,15 @@ if ($parancssor) {
 // olvashatatlan. Itt egy sor a valasz, es a kilepesi kod is beszedes.
 try {
     $naplo = futar_fut();
+    hiba_megszunt('futas', 'Az automata újra működik.');
 } catch (Throwable $hiba) {
     error_log('Etlap futar - a futas elszallt: ' . $hiba->getMessage());
+
+    // Ez a legsulyosabb eset (pl. leallt az adatbazis): ilyenkor a futar
+    // semmit nem tud csinalni. Errol is szolunk - de csak egyszer, nem
+    // percenkent. A Telegram-ertesites adatbazis nelkul is elmegy.
+    ismetlodo_hiba('futas', 'Az automata nem tud dolgozni: ' . $hiba->getMessage()
+        . ' Amíg ez fennáll, étlap nem megy ki.');
 
     if (!$parancssor) {
         http_response_code(500);

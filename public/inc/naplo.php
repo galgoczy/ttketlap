@@ -14,6 +14,7 @@ declare(strict_types=1);
  */
 
 require_once __DIR__ . '/bootstrap.php';
+require_once __DIR__ . '/telegram.php';
 
 /** Ennyi napig oriz bejegyzest a naplo. */
 const NAPLO_MEGORZES_NAP = 60;
@@ -24,8 +25,12 @@ const NAPLO_SZINTEK = ['info', 'siker', 'figyelem', 'hiba'];
 /**
  * Egy esemeny rogzitese. A szoveget visszaadja, igy egy sorban lehet
  * naplozni es visszaterni:  return esemeny('hiba', 'Valami elromlott');
+ *
+ * @param bool $ertesit Menjen-e rola Telegram ertesites. A rutinszeru,
+ *                      gyakori esemenyeknel (pl. "kikuldes folyamatban")
+ *                      hamis, hogy ne teljen meg a telefon.
  */
-function esemeny(string $szint, string $szoveg, ?int $kuldesId = null): string
+function esemeny(string $szint, string $szoveg, ?int $kuldesId = null, bool $ertesit = true): string
 {
     if (!in_array($szint, NAPLO_SZINTEK, true)) {
         $szint = 'info';
@@ -48,6 +53,16 @@ function esemeny(string $szint, string $szoveg, ?int $kuldesId = null): string
         // A naplo hibaja nem allithatja meg a munkat. A szerver sajat
         // hibanaplojaba azert beirjuk, hogy nyoma maradjon.
         error_log('Naplo irasa nem sikerult: ' . $hiba->getMessage() . ' | ' . $szoveg);
+    }
+
+    // Az ertesites akkor is menjen, ha a naplo irasa elbukott - sot, pont
+    // akkor van ra a legnagyobb szukseg.
+    if ($ertesit) {
+        try {
+            telegram_gyujt($szint, $szoveg);
+        } catch (Throwable $hiba) {
+            error_log('Telegram gyujtes nem sikerult: ' . $hiba->getMessage());
+        }
     }
 
     return $szoveg;
@@ -94,4 +109,63 @@ function naplo_takaritas(): void
     } catch (Throwable $hiba) {
         error_log('Naplo takaritas nem sikerult: ' . $hiba->getMessage());
     }
+}
+
+/** Ennyi ido utan jelezzuk ujra ugyanazt a hibat, ha meg mindig fennall. */
+const ISMETLODO_HIBA_CSEND_ORA = 6;
+
+/**
+ * Egy tartos hiba (pl. hianyzo jogosultsag, leallt adatbazis) percenkent
+ * ujra elojonne, es naponta 1440 ugyanolyan bejegyzes + Telegram-uzenet
+ * lenne belole. Ezert ugyanazt a hibat csak egyszer rogzitjuk, es csak
+ * 6 ora mulva jelezzuk ujra, ha meg mindig fennall. A szerver sajat
+ * hibanaplojaba ettol fuggetlenul minden alkalommal bekerul.
+ *
+ * Az allapotot FAJLBAN tartjuk, nem az adatbazisban: igy akkor is
+ * mukodik, ha eppen az adatbazis all - pont akkor van ra a legnagyobb
+ * szukseg.
+ */
+function ismetlodo_hiba(string $kulcs, string $szoveg): string
+{
+    $fajl = hibaallapot_fajl($kulcs);
+    $lenyomat = md5($szoveg);
+
+    $elozo = @file_get_contents($fajl);
+    if (is_string($elozo) && str_contains($elozo, '|')) {
+        [$mikor, $regiLenyomat] = explode('|', trim($elozo), 2);
+        if ($regiLenyomat === $lenyomat
+            && time() - (int) $mikor < ISMETLODO_HIBA_CSEND_ORA * 3600) {
+            return $szoveg;
+        }
+    }
+
+    // Ha a fajl nem irhato, inkabb szoljunk minden alkalommal, mint hogy
+    // elnyeljuk a hibat.
+    @file_put_contents($fajl, time() . '|' . $lenyomat, LOCK_EX);
+
+    return esemeny('hiba', $szoveg);
+}
+
+/** Ha egy korabban jelzett hiba megszunt, azt is jelezzuk - egyszer. */
+function hiba_megszunt(string $kulcs, string $helyreallt): void
+{
+    $fajl = hibaallapot_fajl($kulcs);
+    if (!is_file($fajl)) {
+        return;
+    }
+
+    @unlink($fajl);
+    esemeny('siker', $helyreallt);
+}
+
+/**
+ * A hibaallapot fajl helye. A nev tartalmazza az adatbazis nevet, hogy
+ * ha tobb oldal osztozik a tarhely ideiglenes mappajan, ne keveredjenek.
+ */
+function hibaallapot_fajl(string $kulcs): string
+{
+    $azonosito = substr(md5(cfg('db_name') . '|' . __DIR__), 0, 12);
+
+    return rtrim(sys_get_temp_dir(), '/')
+         . '/ttk-kantin-' . $azonosito . '-' . preg_replace('/[^a-z0-9_]/', '', $kulcs) . '.hiba';
 }

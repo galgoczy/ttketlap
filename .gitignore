@@ -6,3 +6,4 @@ public/inc/config.php
 Thumbs.db
 *.log
 .ftp-deploy-sync-state.json
+tools/al-telegram-keresek.jsonl

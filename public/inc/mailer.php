@@ -368,10 +368,10 @@ function graph_error_message(int $status, string $response, string $muvelet = ''
     // A leggyakoribb hibak magyarul, hogy ne kelljen talalgatni.
     $hint = match (true) {
         str_contains($detail, 'AADSTS7000215') => ' (Hibás vagy lejárt client secret.)',
-        str_contains($detail, 'AADSTS700016') => ' (Ismeretlen client ID – ellenőrizd az alkalmazás azonosítóját.)',
+        str_contains($detail, 'AADSTS700016') => ' (Ismeretlen client ID – ellenőrizze az alkalmazás azonosítóját.)',
         str_contains($detail, 'AADSTS90002')  => ' (Ismeretlen tenant ID.)',
         $status === 403                        => jogosultsag_tipp($muvelet),
-        $status === 404                        => ' (Nincs ilyen postafiók – ellenőrizd a címet a beállításokban.)',
+        $status === 404                        => ' (Nincs ilyen postafiók – ellenőrizze a címet a beállításokban.)',
         default                                => '',
     };
 
