@@ -33,37 +33,6 @@ function fejezet(string $cim): void
 require __DIR__ . '/../public/inc/etlap_futar.php';
 
 // ---------------------------------------------------------------
-fejezet('A beküldött levél szövegének tisztítása');
-
-$alairassal = "Kedves Mindenki!\n\nItt a mai étlap.\n\n--\nKovács Béla\nüzletvezető\n+36 1 234 5678";
-allit(
-    'az aláírás levágódik',
-    !str_contains(tiszta_bevezeto($alairassal), 'Kovács Béla'),
-    tiszta_bevezeto($alairassal)
-);
-allit(
-    'a valódi szöveg megmarad',
-    str_contains(tiszta_bevezeto($alairassal), 'Itt a mai étlap.')
-);
-
-$idezettel = "Új étlap.\n\n> Előző levél sora\n> Másik sor";
-allit(
-    'az idézett válasz kimarad',
-    !str_contains(tiszta_bevezeto($idezettel), 'Előző levél')
-);
-
-$outlookos = "Szöveg\r\n\r\n________________________________\r\nFeladó: valaki";
-allit(
-    'az Outlook válasz-elválasztója levágódik',
-    !str_contains(tiszta_bevezeto($outlookos), 'Feladó:')
-);
-
-allit(
-    'a hosszú szöveg korlátozva van',
-    mb_strlen(tiszta_bevezeto(str_repeat('a', 5000))) <= 1500
-);
-
-// ---------------------------------------------------------------
 fejezet('A levél tárgya');
 
 allit('a Re: előtag lekerül', etlap_targy('Re: Napi étlap') === 'Napi étlap', etlap_targy('Re: Napi étlap'));
@@ -73,17 +42,24 @@ allit('üres tárgy helyett dátumos', str_contains(etlap_targy('   '), 'TTK Kan
 allit('a rendes tárgy változatlan', etlap_targy('Hétfői menü') === 'Hétfői menü');
 
 // ---------------------------------------------------------------
-fejezet('HTML-injekció a beküldött szövegből');
+fejezet('A beküldött levél szövege SOSEM kerül ki');
 
-$rosszindulat = 'Szia <script>alert(1)</script> és <b>vastag</b>';
-$bekezdesek = bevezeto_bekezdesek($rosszindulat);
-$egyben = implode('', $bekezdesek);
+// Valodi eset: a bekuldo levelében ott az alairasa, telefonszama.
+$alairasos = [
+    'targy'        => 'Mai étlap',
+    'bevezeto'     => "Szia, itt a mai!\n\n--\nKovács Béla\nüzletvezető\n+36 30 123 4567\n<script>x</script>",
+    'pdf_nev'      => 'etlap.jpg',
+    'pdf_tartalom' => 'x',
+];
+$aHtml   = etlap_level_html($alairasos, '#');
+$aSzoveg = etlap_level_szoveg($alairasos, '#');
 
-allit('a <script> nem marad HTML-ként', !str_contains($egyben, '<script>'), $egyben);
-allit('a <b> sem marad HTML-ként', !str_contains($egyben, '<b>'));
-allit('a szöveg viszont olvasható marad', str_contains($egyben, 'alert(1)'));
-allit('a sortörésből <br> lesz', str_contains(implode('', bevezeto_bekezdesek("egy\nkettő")), '<br'));
-allit('üres szöveg helyett van alapértelmezett', str_contains(implode('', bevezeto_bekezdesek('')), 'Kedves'));
+allit('az aláírás nem kerül a levélbe', !str_contains($aHtml, 'Kovács Béla'));
+allit('a telefonszám sem', !str_contains($aHtml, '123 4567'));
+allit('a beküldő szövege sem', !str_contains($aHtml, 'itt a mai'));
+allit('a beküldött HTML sem', !str_contains($aHtml, '<script>'));
+allit('a szöveges változatba sem kerül', !str_contains($aSzoveg, 'Kovács Béla') && !str_contains($aSzoveg, 'itt a mai'));
+allit('helyette a sablonszöveg megy', str_contains($aHtml, 'Kedves Vendégünk!'));
 
 // ---------------------------------------------------------------
 fejezet('Méret kiírása');
@@ -103,9 +79,10 @@ $leiratkozo = 'https://ttketlap.pepperhouse.hu/leiratkozas.php?token=' . str_rep
 
 $html = etlap_level_html($kuldes, $leiratkozo);
 allit('a tárgy megjelenik a levélben', str_contains($html, 'hétfői étlap'));
-allit('a bevezető megjelenik', str_contains($html, 'friss alapanyagokkal'));
+allit('a sablonszöveg megjelenik', str_contains($html, 'Mellékelten küldjük friss étlapunkat'));
+allit('a beküldő szövege nem', !str_contains($html, 'friss alapanyagokkal'));
 allit('a leiratkozó link benne van', str_contains($html, $leiratkozo));
-allit('utal a csatolmányra', str_contains($html, 'csatolmány'));
+allit('utal a mellékletre', str_contains($html, 'Mellékelten'));
 allit('a logó is benne van', str_contains($html, 'pepperhouse-logo'));
 
 $szoveg = etlap_level_szoveg($kuldes, $leiratkozo);
@@ -217,10 +194,10 @@ allit('PDF-nél nem kép', !kuldes_kep_e($pdfKuldes));
 
 $kepHtml = etlap_level_html($kepKuldes + ['pdf_tartalom' => 'x'], '#');
 allit('a képes levélben beágyazott kép van', str_contains($kepHtml, 'src="cid:etlap"'), '');
-allit('a képes levél NEM csatolmányra utal', !str_contains($kepHtml, 'csatolmányában'));
+allit('a képes levélben nincs külön csatolmány-sor', !str_contains($kepHtml, 'csatolmányában'));
 
 $pdfHtml = etlap_level_html($pdfKuldes + ['pdf_tartalom' => 'x'], '#');
-allit('a PDF-es levél a csatolmányra utal', str_contains($pdfHtml, 'csatolmányában'));
+allit('a PDF-es levél a mellékletre utal', str_contains($pdfHtml, 'Mellékelten'));
 allit('a PDF-es levélben nincs beágyazott kép', !str_contains($pdfHtml, 'cid:etlap'));
 
 // ---------------------------------------------------------------
@@ -283,7 +260,7 @@ if (!function_exists('imagecreatetruecolor')) {
 }
 
 // ---------------------------------------------------------------
-fejezet('Alapszöveg üres levélnél');
+fejezet('A sablonszöveg felépítése');
 
 $uresKep = ['targy' => 'Mai étlap', 'bevezeto' => '', 'pdf_nev' => 'etlap.jpg', 'pdf_tartalom' => 'x'];
 $uresPdf = ['targy' => 'Mai étlap', 'bevezeto' => '', 'pdf_nev' => 'etlap.pdf', 'pdf_tartalom' => 'x'];
@@ -305,14 +282,13 @@ allit('PDF-nél nincs fölösleges ismétlés',
     !str_contains($uresPdfHtml, 'csatolmányában, PDF-ben'));
 allit('PDF-nél is ott az aláírás', str_contains($uresPdfHtml, 'a TTK Kantin csapata'));
 
-// Ha a bekuldo irt sajat szoveget, az alapszoveg NEM jelenik meg.
+// Ha a bekuldo irt szoveget (pl. egy regebbi, meg eltarolt kikuldesnel),
+// akkor is a sablon megy ki.
 $sajat = ['targy' => 'Mai étlap', 'bevezeto' => 'Ma rendezvény miatt rövidebb a választék.',
           'pdf_nev' => 'etlap.pdf', 'pdf_tartalom' => 'x'];
 $sajatHtml = etlap_level_html($sajat, '#');
-allit('saját szövegnél nincs alapszöveg', !str_contains($sajatHtml, 'Kedves Vendégünk!'));
-allit('saját szövegnél a csatolmány-sor megmarad',
-    str_contains($sajatHtml, 'csatolmányában, PDF-ben'));
-allit('saját szöveg megjelenik', str_contains($sajatHtml, 'rendezvény miatt'));
+allit('eltárolt beküldött szöveg esetén is a sablon megy', str_contains($sajatHtml, 'Kedves Vendégünk!'));
+allit('és a beküldött szöveg nem', !str_contains($sajatHtml, 'rendezvény miatt'));
 
 // A szoveges valtozat ugyanazt mondja.
 $uresSzoveg = etlap_level_szoveg($uresKep, '#');
@@ -324,11 +300,6 @@ allit('a szöveges változatban is az aláírás van hátul',
     strpos($uresSzoveg, 'a TTK Kantin csapata') > strpos($uresSzoveg, 'képként'));
 allit('a szöveges változatban nincs HTML', !str_contains($uresSzoveg, '<'));
 
-// Csak szokozokbol allo torzs is uresnek szamit.
-$csakSzokoz = $uresKep;
-$csakSzokoz['bevezeto'] = "   \n\n  ";
-allit('a csak szóközből álló levél is alapszöveget kap',
-    str_contains(etlap_level_html($csakSzokoz, '#'), 'Kedves Vendégünk!'));
 
 // ---------------------------------------------------------------
 fejezet('Napló');

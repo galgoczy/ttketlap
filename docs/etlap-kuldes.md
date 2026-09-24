@@ -8,7 +8,22 @@ végigvezet a beállításon.
 
 1. Az üzletvezető ráküldi az étlapot az étlap-postafiókra
    (`ttk.etlap@pepperhouse.hu`), **PDF, JPG vagy PNG csatolmányként**.
-   A levél szövege lesz a körlevél bevezetője, a tárgya pedig a körlevél tárgya.
+   A levél **tárgya** lesz a körlevél tárgya. A levél **szövegét a rendszer
+   figyelmen kívül hagyja** – mindig ez a sablonszöveg megy ki:
+
+   > Kedves Vendégünk!
+   >
+   > Mellékelten küldjük friss étlapunkat. Reméljük, hogy hamarosan ismét
+   > vendégül láthatjuk!
+   >
+   > *[az étlap]*
+   >
+   > a TTK Kantin csapata
+
+   Ez szándékos: a beküldött levelekben ott az aláírás, telefonszám és egyéb
+   belső szöveg, ami így véletlenül sem kerülhet ki a vendégekhez. A szöveg
+   módosításához a `public/inc/etlap_futar.php` fájlban az `ETLAP_SABLON`-t
+   kell átírni.
 2. A tárhelyen percenként lefut a `futar.php`. Megnézi a postafiókot, és ha
    talál jogosult feladótól érkezett, csatolmányos levelet, előkészíti
    a kiküldést.

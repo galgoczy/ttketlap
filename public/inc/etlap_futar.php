@@ -149,15 +149,12 @@ function beerkezett_feldolgozas(): array
     $url = graph_mailbox_url($mailbox, 'mailFolders/inbox/messages')
          . '?$filter=' . rawurlencode('isRead eq false')
          . '&$top=' . ETLAP_MAX_UZENET
-         . '&$select=' . rawurlencode('id,subject,from,receivedDateTime,hasAttachments,body,internetMessageHeaders');
+         . '&$select=' . rawurlencode('id,subject,from,receivedDateTime,hasAttachments,internetMessageHeaders');
 
-    // A Prefer fejleccel a level torzset sima szovegkent kerjuk, igy nem
-    // kell HTML-t bontogatnunk.
-    $valasz = graph_get(
-        $url,
-        ['Prefer: outlook.body-content-type="text"'],
-        'a postafiók olvasása'
-    );
+    // A level torzset szandekosan le sem kerjuk: a kimeno levelben mindig
+    // a sajat sablonszovegunk all. A bekuldott levelek szovegeben ott az
+    // alairas es egyeb belso szoveg, ami veletlenul kikerulhetne.
+    $valasz = graph_get($url, [], 'a postafiók olvasása');
     $uzenetek = $valasz['value'] ?? [];
 
     if (!$uzenetek) {
@@ -260,7 +257,8 @@ function uzenet_feldolgozas(string $mailbox, array $uzenet): string
         ));
     }
 
-    $bevezeto = tiszta_bevezeto((string) ($uzenet['body']['content'] ?? ''));
+    // A bekuldo szovege sosem kerul a korlevelbe (lasd fent).
+    $bevezeto = '';
     $targy    = etlap_targy($targy);
     $token    = bin2hex(random_bytes(32));
     $varakozas = max(0, (int) cfg('etlap_varakozas_perc', '15'));
@@ -453,38 +451,6 @@ function kep_kicsinyites(string $tartalom, string $tipus, int $maxSzelesseg = 16
     }
 }
 
-/**
- * A bekuldott level szovegebol hasznalhato bevezetot keszit.
- * Levagja az alairast es az idezett valaszreszt, mert azok nem a
- * feliratkozoknak szolnak.
- */
-function tiszta_bevezeto(string $nyers): string
-{
-    $nyers = str_replace(["\r\n", "\r"], "\n", $nyers);
-    $sorok = [];
-
-    foreach (explode("\n", $nyers) as $sor) {
-        $vagott = trim($sor);
-
-        // Alairas hatarolo, idezet, vagy a valasz fejlece: innentol vagunk.
-        if ($vagott === '--' || $vagott === '__' || str_starts_with($vagott, '-----Original')
-            || str_starts_with($vagott, '________')) {
-            break;
-        }
-        if (str_starts_with($vagott, '>')) {
-            continue;
-        }
-
-        $sorok[] = $vagott;
-    }
-
-    $szoveg = trim(implode("\n", $sorok));
-    // A tobbszoros ures sorokat egyre huzzuk ossze.
-    $szoveg = (string) preg_replace("/\n{3,}/", "\n\n", $szoveg);
-
-    return mb_substr($szoveg, 0, 1500);
-}
-
 /** A level targya. Ha a bekuldo nem irt targyat, adunk egy ertelmeset. */
 function etlap_targy(string $nyers): string
 {
@@ -529,45 +495,35 @@ function etlap_level_html(array $kuldes, string $leiratkozoUrl): string
 }
 
 /**
- * A level torzse: bevezeto szoveg + az etlap (beagyazott kep vagy a
- * csatolmanyra utalo sor). Az elonezet is ezt hasznalja, igy a bekuldo
- * pontosan azt latja, amit a cimzettek kapnak.
+ * A level torzse: a sablonszoveg + az etlap. Az elonezet is ezt
+ * hasznalja, igy a bekuldo pontosan azt latja, amit a cimzettek kapnak.
+ *
+ * A szoveg MINDIG a sablon (ETLAP_SABLON). A bekuldott level szovege
+ * szandekosan nem kerul bele - akkor sem, ha egy regebbi kikuldesnel
+ * meg el van tarolva -, mert abban ott lehet az alairas.
  *
  * @param array<string,mixed> $kuldes
  */
 function etlap_torzs(array $kuldes): string
 {
-    $bekezdesek = bevezeto_bekezdesek((string) $kuldes['bevezeto']);
-    $kep = kuldes_kep_e($kuldes);
+    $bekezdesek = array_map('e', ETLAP_SABLON);
 
-    // Sajat alapszovegnel tudjuk, hol az alairas: az mindig az utolso
-    // bekezdes. Az etlapot ele tesszuk, kulonben a kep az alairas ala
-    // csusszan. A bekuldo sajat szovegenel ezt nem talalgatjuk.
-    $alairas = '';
-    if (alap_bevezeto_e($kuldes) && count($bekezdesek) > 1) {
-        $alairas = (string) array_pop($bekezdesek);
-    }
+    // Az utolso bekezdes az alairas. Az etlapot ele tesszuk, kulonben a
+    // kep az alairas ala csuszna.
+    $alairas = (string) array_pop($bekezdesek);
 
     $torzs = '';
     foreach ($bekezdesek as $bekezdes) {
         $torzs .= email_bekezdes($bekezdes);
     }
 
-    if ($kep) {
-        // Kepnel a level torzsebe agyazzuk: a cimzett rogton latja,
-        // nem kell megnyitnia semmit.
+    // Kepnel a level torzsebe agyazzuk: a cimzett rogton latja. PDF-nel
+    // nem kell kulon sor: a sablon maga mondja, hogy mellekelten kuldjuk.
+    if (kuldes_kep_e($kuldes)) {
         $torzs .= email_kep(ETLAP_KEP_CID);
-    } elseif (!alap_bevezeto_e($kuldes)) {
-        // Az alapszoveg maga mondja, hogy mellekelten kuldjuk - ott ez
-        // a sor csak ismetles lenne.
-        $torzs .= email_bekezdes('Az étlapot a levél csatolmányában, PDF-ben találja.', true);
     }
 
-    if ($alairas !== '') {
-        $torzs .= email_bekezdes($alairas);
-    }
-
-    return $torzs;
+    return $torzs . email_bekezdes($alairas);
 }
 
 /** A beagyazott kep azonositoja a levelben. */
@@ -629,18 +585,12 @@ function etlap_level_szoveg(array $kuldes, string $leiratkozoUrl): string
 {
     $sorok = [(string) $kuldes['targy'], ''];
 
-    $bevezeto = trim((string) $kuldes['bevezeto']);
-    $alairas  = '';
+    // Ugyanaz a felepites, mint a HTML valtozatban: sablonszoveg, etlap,
+    // es a vegen az alairas.
+    $bekezdesek = ETLAP_SABLON;
+    $alairas    = (string) array_pop($bekezdesek);
 
-    if ($bevezeto === '') {
-        // Ugyanaz a felepites, mint a HTML valtozatban: az alairas
-        // az etlap utan jon.
-        $bekezdesek = ETLAP_ALAP_BEVEZETO;
-        $alairas    = (string) array_pop($bekezdesek);
-        $bevezeto   = implode("\n\n", $bekezdesek);
-    }
-
-    $sorok[] = $bevezeto;
+    $sorok[] = implode("\n\n", $bekezdesek);
     $sorok[] = '';
 
     $sorok[] = kuldes_kep_e($kuldes)
@@ -648,10 +598,8 @@ function etlap_level_szoveg(array $kuldes, string $leiratkozoUrl): string
         : 'Az étlapot a levél csatolmányában, PDF-ben találja.';
     $sorok[] = '';
 
-    if ($alairas !== '') {
-        $sorok[] = $alairas;
-        $sorok[] = '';
-    }
+    $sorok[] = $alairas;
+    $sorok[] = '';
     $sorok[] = '--';
     $sorok[] = 'Ezt a levelet azért kapja, mert feliratkozott a TTK Kantin étlapjára.';
 
@@ -663,48 +611,15 @@ function etlap_level_szoveg(array $kuldes, string $leiratkozoUrl): string
 }
 
 /**
- * Ez a szoveg megy ki, ha a bekuldo ures levelet kuldott (csak csatolmanyt).
- * Az utolso bekezdes az alairas - a kep/csatolmany ele kerul, hogy az
- * alairas maradjon a levél vegen.
+ * A korlevel szovege. Mindig ez megy ki; a bekuldott level szovege nem.
+ * Az utolso bekezdes az alairas - az etlap ele kerul.
  */
-const ETLAP_ALAP_BEVEZETO = [
+const ETLAP_SABLON = [
     'Kedves Vendégünk!',
     'Mellékelten küldjük friss étlapunkat. Reméljük, hogy hamarosan ismét '
     . 'vendégül láthatjuk!',
     'a TTK Kantin csapata',
 ];
-
-/** Sajat alapszoveggel megy-e ki a level, vagy a bekuldo irt sajatot? */
-function alap_bevezeto_e(array $kuldes): bool
-{
-    return trim((string) ($kuldes['bevezeto'] ?? '')) === '';
-}
-
-/**
- * A bevezeto szoveget bekezdesekre bontja, es HTML-biztossa teszi.
- *
- * @return array<int,string>
- */
-function bevezeto_bekezdesek(string $bevezeto): array
-{
-    $bevezeto = trim($bevezeto);
-
-    if ($bevezeto === '') {
-        return array_map('e', ETLAP_ALAP_BEVEZETO);
-    }
-
-    $bekezdesek = [];
-    foreach (preg_split("/\n\s*\n/", $bevezeto) ?: [] as $resz) {
-        $resz = trim($resz);
-        if ($resz !== '') {
-            // Fontos: eloszor e()-vel biztonsagossa tesszuk, es csak utana
-            // teszunk bele <br>-t. Forditva a bekuldo HTML-t csempeszhetne be.
-            $bekezdesek[] = nl2br(e($resz));
-        }
-    }
-
-    return $bekezdesek ?: array_map('e', ETLAP_ALAP_BEVEZETO);
-}
 
 // ---------------------------------------------------------------------
 // 3. lepes: elonezet a bekuldonek
