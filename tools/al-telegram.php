@@ -19,6 +19,11 @@ if (($_POST['message_thread_id'] ?? '') === '999') {
     echo '{"ok":false,"error_code":400,"description":"Bad Request: message thread not found"}';
     return;
 }
+if (($_POST['chat_id'] ?? '') === '-5223697628') {
+    http_response_code(400);
+    echo '{"ok":false,"error_code":400,"description":"Bad Request: group chat was upgraded to a supergroup chat","parameters":{"migrate_to_chat_id":-1004476987835}}';
+    return;
+}
 if (($_POST['chat_id'] ?? '') === '999') {
     http_response_code(400);
     echo '{"ok":false,"error_code":400,"description":"Bad Request: chat not found"}';

@@ -139,6 +139,14 @@ allit('nem létező témánál magyarul megmondja, mi a baj',
 $GLOBALS['config']['telegram_chat_id']   = '42';
 $GLOBALS['config']['telegram_thread_id'] = '';
 
+// Regi (atalakitas elotti) csoport-azonosito
+$GLOBALS['config']['telegram_chat_id'] = '-5223697628';
+$hiba = null;
+telegram_kuldes('x', $hiba);
+allit('régi csoportazonosítónál magyarul szól', str_contains((string) $hiba, 'régi azonosítója'), (string) $hiba);
+allit('és megadja az újat', str_contains((string) $hiba, '-1004476987835'), (string) $hiba);
+$GLOBALS['config']['telegram_chat_id'] = '42';
+
 // Hibas token
 $GLOBALS['config']['telegram_bot_token'] = '1:ROSSZTOKEN';
 $hiba = null;

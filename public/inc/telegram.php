@@ -184,6 +184,13 @@ function telegram_kuldes(string $szoveg, ?string &$hiba = null): bool
                 return true;
             }
             $hiba = telegram_hiba_magyarul($status, (string) ($adat['description'] ?? $valasz));
+
+            // Ha a csoportot kozben szupercsoportta alakitottak (pl. a temak
+            // bekapcsolasakor), a Telegram megadja az uj azonositot is.
+            $uj = $adat['parameters']['migrate_to_chat_id'] ?? null;
+            if ($uj !== null) {
+                $hiba .= ' Az új azonosító: ' . $uj . ' – ezt írja a telegram_chat_id helyére.';
+            }
         }
     } catch (Throwable $kivetel) {
         $hiba = $kivetel->getMessage();
@@ -205,6 +212,8 @@ function telegram_hiba_magyarul(int $status, string $leiras): string
         str_contains($leiras, 'thread not found') => ' – nincs ilyen téma a csoportban. Ellenőrizze '
             . 'a telegram_thread_id értékét (a téma linkjében a csoport azonosítója utáni szám).',
         str_contains($leiras, 'TOPIC_CLOSED') => ' – ez a téma le van zárva, a bot nem írhat bele.',
+        str_contains($leiras, 'upgraded to a supergroup') => ' – ez a csoport régi azonosítója. '
+            . 'A csoportot közben szupercsoporttá alakították, és új azonosítót kapott.',
         str_contains($leiras, 'bot was blocked') => ' – a botot letiltották ebben a chatben.',
         str_contains($leiras, 'not enough rights') => ' – a botnak nincs joga írni ebbe a csoportba.',
         default => '',
