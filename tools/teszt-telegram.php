@@ -116,6 +116,29 @@ allit('a jó chatbe', ($k[0]['post']['chat_id'] ?? '') === '42');
 allit('HTML formázással', ($k[0]['post']['parse_mode'] ?? '') === 'HTML');
 allit('a szöveg épen megérkezett', ($k[0]['post']['text'] ?? '') === 'Próba <b>üzenet</b>');
 
+allit('téma nélkül nem küld téma-azonosítót', !isset($k[0]['post']['message_thread_id']));
+
+// Temas csoport
+@unlink(KERES_NAPLO);
+$GLOBALS['config']['telegram_chat_id']   = '-1001234567890';
+$GLOBALS['config']['telegram_thread_id'] = '42';
+$hiba = null;
+$ok = telegram_kuldes('Témába', $hiba);
+$k = keresek();
+allit('témás csoportba is elmegy', $ok, (string) $hiba);
+allit('a téma azonosítója is átmegy', ($k[0]['post']['message_thread_id'] ?? '') === '42',
+    json_encode($k[0]['post'] ?? []));
+allit('a csoport azonosítója is jó', ($k[0]['post']['chat_id'] ?? '') === '-1001234567890');
+
+$GLOBALS['config']['telegram_thread_id'] = '999';
+$hiba = null;
+telegram_kuldes('x', $hiba);
+allit('nem létező témánál magyarul megmondja, mi a baj',
+    str_contains((string) $hiba, 'telegram_thread_id'), (string) $hiba);
+
+$GLOBALS['config']['telegram_chat_id']   = '42';
+$GLOBALS['config']['telegram_thread_id'] = '';
+
 // Hibas token
 $GLOBALS['config']['telegram_bot_token'] = '1:ROSSZTOKEN';
 $hiba = null;

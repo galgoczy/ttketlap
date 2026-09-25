@@ -14,6 +14,11 @@ if (str_contains($ut, 'ROSSZTOKEN')) {
     echo '{"ok":false,"error_code":401,"description":"Unauthorized"}';
     return;
 }
+if (($_POST['message_thread_id'] ?? '') === '999') {
+    http_response_code(400);
+    echo '{"ok":false,"error_code":400,"description":"Bad Request: message thread not found"}';
+    return;
+}
 if (($_POST['chat_id'] ?? '') === '999') {
     http_response_code(400);
     echo '{"ok":false,"error_code":400,"description":"Bad Request: chat not found"}';

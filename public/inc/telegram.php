@@ -11,6 +11,7 @@ declare(strict_types=1);
  * Beallitas (config.php):
  *   'telegram_bot_token' => '123456:ABC...',  // a @BotFather adja
  *   'telegram_chat_id'   => '-100123...',     // kinek/melyik csoportba
+ *   'telegram_thread_id' => '42',             // temas csoportnal: melyik temaba
  *
  * Ha barmelyik ures, az ertesites egyszeruen kimarad.
  * Az ertesites hibaja SOSEM akaszthatja meg a munkat.
@@ -146,16 +147,24 @@ function telegram_kuldes(string $szoveg, ?string &$hiba = null): bool
         return false;
     }
 
+    $mezok = [
+        'chat_id'                  => cfg('telegram_chat_id'),
+        'text'                     => $szoveg,
+        'parse_mode'               => 'HTML',
+        'disable_web_page_preview' => 'true',
+    ];
+
+    // Temakra (topic/thread) bontott csoportnal enelkul az uzenet az
+    // "Altalanos" temaba menne, nem oda, ahova szanjuk.
+    if (cfg('telegram_thread_id') !== '') {
+        $mezok['message_thread_id'] = cfg('telegram_thread_id');
+    }
+
     try {
         $ch = curl_init(rtrim($alapUrl, '/') . '/bot' . cfg('telegram_bot_token') . '/sendMessage');
         curl_setopt_array($ch, [
             CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => http_build_query([
-                'chat_id'                  => cfg('telegram_chat_id'),
-                'text'                     => $szoveg,
-                'parse_mode'               => 'HTML',
-                'disable_web_page_preview' => 'true',
-            ]),
+            CURLOPT_POSTFIELDS     => http_build_query($mezok),
             CURLOPT_RETURNTRANSFER => true,
             // Rovid idokorlat: ha a Telegram lassu, ne tartsa fel a futast.
             CURLOPT_TIMEOUT        => 10,
@@ -193,6 +202,9 @@ function telegram_hiba_magyarul(int $status, string $leiras): string
         $status === 401 => ' – hibás a bot token (telegram_bot_token).',
         str_contains($leiras, 'chat not found') => ' – ismeretlen chat. Ellenőrizze a telegram_chat_id '
             . 'értékét, és hogy írt-e már a botnak (vagy hozzáadta-e a csoporthoz).',
+        str_contains($leiras, 'thread not found') => ' – nincs ilyen téma a csoportban. Ellenőrizze '
+            . 'a telegram_thread_id értékét (a téma linkjében a csoport azonosítója utáni szám).',
+        str_contains($leiras, 'TOPIC_CLOSED') => ' – ez a téma le van zárva, a bot nem írhat bele.',
         str_contains($leiras, 'bot was blocked') => ' – a botot letiltották ebben a chatben.',
         str_contains($leiras, 'not enough rights') => ' – a botnak nincs joga írni ebbe a csoportba.',
         default => '',

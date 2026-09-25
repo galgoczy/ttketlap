@@ -114,4 +114,10 @@ return [
     // cimet - a "chat":{"id": ...} ertek kell. Csoportnal negativ szam.
     'telegram_bot_token' => '',
     'telegram_chat_id'   => '',
+    // Temakra bontott csoportnal: melyik temaba menjenek az uzenetek.
+    // A temaban egy uzenetre jobb gomb -> "Hivatkozas masolasa":
+    //   https://t.me/c/1234567890/42/100
+    // Itt a csoport: -1001234567890 (ele -100), a tema: 42 (a kozepso szam).
+    // Ha ures, az uzenet a csoport "Altalanos" temajaba megy.
+    'telegram_thread_id' => '',
 ];

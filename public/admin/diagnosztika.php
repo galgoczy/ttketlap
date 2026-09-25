@@ -243,8 +243,20 @@ ellenoriz('Telegram értesítés', function () {
                       . 'tokent másolta-e be, szóköz nélkül.'];
     }
 
-    // A tokent sosem irjuk ki, csak a chat azonositot.
-    return ['ok', 'beállítva (chat: ' . $chat . '). Kipróbálni a Napló oldalon lehet.'];
+    $tema = cfg('telegram_thread_id');
+    if ($tema !== '' && !ctype_digit($tema)) {
+        return ['hiba', 'A telegram_thread_id csak szám lehet (a téma linkjének középső száma).'];
+    }
+    // Csoport-azonosito -100-zal kezdodik; ha tema van megadva, de a chat
+    // nem csoport, az szinte biztosan elgepeles.
+    if ($tema !== '' && !str_starts_with($chat, '-100')) {
+        return ['figyelem', 'Téma (thread) van megadva, de a chat azonosító nem csoporté '
+                          . '(a csoportoké -100-zal kezdődik). Ellenőrizze a telegram_chat_id-t.'];
+    }
+
+    // A tokent sosem irjuk ki, csak a chat es a tema azonositot.
+    return ['ok', 'beállítva (chat: ' . $chat . ($tema !== '' ? ', téma: ' . $tema : '')
+                . '). Kipróbálni a Napló oldalon lehet.'];
 });
 
 ellenoriz('`rendszer_allapot` tábla', function () {

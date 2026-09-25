@@ -229,6 +229,31 @@ https://api.telegram.org/bot<A TOKEN>/getUpdates
 
 A válaszban a `"chat":{"id": ...}` szám kell.
 
+### Témákra bontott csoport (thread / topic)
+
+Ha a csoport témákra van bontva, meg kell adni, melyik témába menjenek az
+üzenetek – különben az „Általános" témába kerülnek:
+
+```php
+'telegram_chat_id'   => '-1001234567890',
+'telegram_thread_id' => '42',
+```
+
+Mindkettő kiolvasható egy linkből: a témában egy üzenetre **jobb gomb →
+Hivatkozás másolása**. A link így néz ki:
+
+```
+https://t.me/c/1234567890/42/100
+               ──────────  ──
+               csoport     téma
+```
+
+- **chat_id:** a csoport száma elé írjon `-100`-at → `-1001234567890`
+- **thread_id:** a középső szám → `42`
+
+A botot adja hozzá a csoporthoz. Ha a csoportban csak adminok írhatnak,
+a botot is adminná kell tenni (elég az üzenetküldési jog).
+
 Kipróbálni: **admin → Napló → Teszt üzenet küldése.** Ha nem megy, a gomb
 magyarul megmondja, mi a baj (rossz token, ismeretlen chat stb.).
 
